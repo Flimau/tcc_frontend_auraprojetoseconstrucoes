@@ -1,0 +1,26 @@
+{
+  // Formatação automática ao salvar
+  "editor.formatOnSave": true,
+
+  // Define o Prettier como formatador padrão
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Ativa melhorias visuais para Dart/Flutter
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "Dart-Code.dart-code"
+  },
+
+  // Evita problemas com lint e organiza importações
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+
+  // Flutter específico: mostra estrutura de widgets no código
+  "dart.previewFlutterUiGuides": true,
+  "dart.flutterOutline": true,
+
+  // Prettier: usar aspas duplas e ponto e vírgula se quiser
+  "prettier.singleQuote": false,
+  "prettier.semi": true
+}
