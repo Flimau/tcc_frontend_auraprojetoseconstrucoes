@@ -99,7 +99,7 @@ class TelaListarObras extends StatelessWidget {
                         final obra = controller.resultados[index];
                         return Card(
                           child: ListTile(
-                            title: Text(obra.nome),
+                            title: Text(obra.clienteNome),
                             subtitle: Text('Status: ${obra.status}'),
                             trailing: IconButton(
                               icon: const Icon(Icons.edit),

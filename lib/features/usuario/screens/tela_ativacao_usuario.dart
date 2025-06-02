@@ -8,7 +8,7 @@ import '../../../shared/components/form_widgets.dart';
 import '../../../theme/theme.dart';
 
 class TelaAtivacaoUsuario extends StatefulWidget {
-  const TelaAtivacaoUsuario({Key? key}) : super(key: key);
+  const TelaAtivacaoUsuario({super.key});
 
   @override
   State<TelaAtivacaoUsuario> createState() => _TelaAtivacaoUsuarioState();

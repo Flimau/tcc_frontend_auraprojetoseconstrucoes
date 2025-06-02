@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:front_application/shared/components/mensagem_snackbar.dart';
 import 'package:front_application/shared/services/cep_service.dart';
 import 'package:front_application/shared/services/geolocalizacao_service.dart';
 import 'package:front_application/shared/utils/converters.dart';

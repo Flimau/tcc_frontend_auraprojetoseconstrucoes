@@ -45,7 +45,10 @@ class MyApp extends StatelessWidget {
         // Obra
         '/cadastro_obra': (context) => const TelaCadastroObra(),
         '/tela_listar_obras': (context) => const TelaListarObras(),
-        '/acompanhamento_obra': (context) => const TelaAcompanhamentoObra(),
+        '/acompanhamento_obra': (context) {
+          final obraId = ModalRoute.of(context)!.settings.arguments as String;
+          return TelaAcompanhamentoObra(obraId: obraId);
+        },
         '/kanban_obras': (context) => const TelaKanbanObras(),
 
         // Contrato

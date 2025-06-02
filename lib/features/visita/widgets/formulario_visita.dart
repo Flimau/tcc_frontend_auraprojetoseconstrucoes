@@ -66,7 +66,7 @@ class FormularioVisita extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const TituloSecao('Mídias da Visita'),
-              ...controller.midias.map((m) => Text('🖼️ $m')).toList(),
+              ...controller.midias.map((m) => Text('🖼️ $m')),
               const SizedBox(height: 8),
               BotaoPadrao(
                 texto: 'Adicionar Mídia (simulado)',
