@@ -1,11 +1,13 @@
-class Diario {
-  final String id;
-  final int obraId;
-  final String dataRegistro;
-  final List<String> itens;
-  final String? observacoes;
+// lib/features/obra/models/diario_de_obra.dart
 
-  Diario({
+class DiarioDeObra {
+  final int id;
+  final int obraId;
+  final String dataRegistro; // “YYYY-MM-DD”
+  final List<String> itens; // lista de strings
+  final String? observacoes; // pode ser nulo
+
+  const DiarioDeObra({
     required this.id,
     required this.obraId,
     required this.dataRegistro,
@@ -13,14 +15,22 @@ class Diario {
     this.observacoes,
   });
 
-  factory Diario.fromJson(Map<String, dynamic> json) {
-    return Diario(
-      id: json['id'].toString(),
-      obraId: json['obraId'] as int,
+  factory DiarioDeObra.fromJson(Map<String, dynamic> json) {
+    return DiarioDeObra(
+      id: (json['id'] as num).toInt(),
+      obraId: (json['obraId'] as num).toInt(),
       dataRegistro: json['dataRegistro'] as String,
       itens: (json['itens'] as List<dynamic>).map((e) => e as String).toList(),
       observacoes:
           json['observacoes'] != null ? json['observacoes'] as String : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'dataRegistro': dataRegistro,
+      'itens': itens,
+      if (observacoes != null) 'observacoes': observacoes,
+    };
   }
 }

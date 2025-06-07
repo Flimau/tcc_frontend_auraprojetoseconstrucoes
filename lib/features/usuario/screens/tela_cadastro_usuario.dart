@@ -55,18 +55,6 @@ class TelaCadastroUsuario extends StatelessWidget {
                                 () => controller.atualizarUsuario(context),
                           ),
                         const SizedBox(height: 16),
-                        if (controller.usuarioCarregado &&
-                            controller.ativo != null)
-                          BotaoSwitch(
-                            value: controller.ativo!,
-                            ativoLabel: 'Desativar usuário',
-                            inativoLabel: 'Ativar usuário',
-                            onChanged:
-                                (value) => controller.alterarStatusUsuario(
-                                  value,
-                                  context,
-                                ),
-                          ),
                       ],
                     ),
                   ),

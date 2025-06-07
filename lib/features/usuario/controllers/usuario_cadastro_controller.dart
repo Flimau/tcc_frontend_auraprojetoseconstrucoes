@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:front_application/shared/services/cep_service.dart';
@@ -38,6 +39,7 @@ class UsuarioCadastroController extends ChangeNotifier {
   String? sexoSelecionado;
   String? tipoUsuarioSelecionado;
   String? tipoPessoaSelecionado;
+  String? enderecoId;
 
   void atualizar() => notifyListeners();
 
@@ -134,6 +136,7 @@ class UsuarioCadastroController extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final pessoa = data['pessoa'];
+        enderecoId = pessoa['endereco']['id']?.toString();
 
         idUsuario = data['id'].toString();
         ativo = data['ativo'] ?? true;
@@ -153,8 +156,9 @@ class UsuarioCadastroController extends ChangeNotifier {
         if (pessoa['dataNascimento'] != null) {
           try {
             final DateTime dataNasc = DateTime.parse(pessoa['dataNascimento']);
-            nascimentoController.text =
-                DateFormat('dd/MM/yyyy').format(dataNasc);
+            nascimentoController.text = DateFormat(
+              'dd/MM/yyyy',
+            ).format(dataNasc);
           } catch (_) {
             nascimentoController.text = pessoa['dataNascimento'];
           }
@@ -166,12 +170,10 @@ class UsuarioCadastroController extends ChangeNotifier {
         ruaController.text = pessoa['endereco']['logradouro'] ?? '';
         numeroController.text = pessoa['endereco']['numero'] ?? '';
         bairroController.text = pessoa['endereco']['bairro'] ?? '';
-        complementoController.text =
-            pessoa['endereco']['complemento'] ?? '';
+        complementoController.text = pessoa['endereco']['complemento'] ?? '';
         cepController.text = pessoa['endereco']['cep'] ?? '';
-        cidadeController.text =
-            pessoa['endereco']['municipio']?.toString() ?? '';
-        estadoController.text = pessoa['endereco']['estado']?['sigla'] ?? '';
+        cidadeController.text = pessoa['endereco']['cidade']?.toString() ?? '';
+        estadoController.text = pessoa['endereco']['siglaEstado'] ?? '';
 
         notifyListeners();
       } else {
@@ -184,13 +186,13 @@ class UsuarioCadastroController extends ChangeNotifier {
 
   /// Altera status do usuário: desativa ou reativa.
   /// Reativar CLIENTE retorna token no dialog; ADM/EXECUTOR só SnackBar.
-  Future<void> alterarStatusUsuario(
-      bool ativar, BuildContext context) async {
+  Future<void> alterarStatusUsuario(bool ativar, BuildContext context) async {
     if (!usuarioCarregado || idUsuario == null) return;
 
     final acao = ativar ? 'reativar' : 'desativar';
-    final url =
-        Uri.parse('${AppConstants.baseUrl}/api/usuario/$idUsuario/$acao');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/usuario/$idUsuario/$acao',
+    );
 
     try {
       final response = await http.put(url);
@@ -213,26 +215,27 @@ class UsuarioCadastroController extends ChangeNotifier {
 
         showDialog(
           context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Token de Reativação'),
-            content: SelectableText(token ?? '—'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  if (token != null) {
-                    Clipboard.setData(ClipboardData(text: token));
-                    mostrarMensagemInterna?.call(context, 'Token copiado!');
-                  }
-                  Navigator.pop(context);
-                },
-                child: const Text('Copiar'),
+          builder:
+              (_) => AlertDialog(
+                title: const Text('Token de Reativação'),
+                content: SelectableText(token ?? '—'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      if (token != null) {
+                        Clipboard.setData(ClipboardData(text: token));
+                        mostrarMensagemInterna?.call(context, 'Token copiado!');
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Copiar'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Fechar'),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Fechar'),
-              ),
-            ],
-          ),
         );
       } else {
         mostrarMensagemInterna?.call(
@@ -242,11 +245,7 @@ class UsuarioCadastroController extends ChangeNotifier {
         );
       }
     } catch (e) {
-      mostrarMensagemInterna?.call(
-        context,
-        'Erro de conexão: $e',
-        erro: true,
-      );
+      mostrarMensagemInterna?.call(context, 'Erro de conexão: $e', erro: true);
     }
   }
 
@@ -273,6 +272,7 @@ class UsuarioCadastroController extends ChangeNotifier {
         "dataNascimento": formatarDataParaIso(nascimentoController.text),
         "sexo": sexoSelecionado ?? "INDEFINIDO",
         "endereco": {
+          "id" : enderecoId,
           "logradouro": ruaController.text,
           "numero": numeroController.text,
           "bairro": bairroController.text,
@@ -308,11 +308,7 @@ class UsuarioCadastroController extends ChangeNotifier {
         );
       }
     } catch (e) {
-      mostrarMensagemInterna?.call(
-        context,
-        'Erro de conexão: $e',
-        erro: true,
-      );
+      mostrarMensagemInterna?.call(context, 'Erro de conexão: $e', erro: true);
     }
   }
 }

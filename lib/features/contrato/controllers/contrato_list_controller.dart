@@ -1,70 +1,57 @@
+// lib/features/contrato/controllers/contrato_list_controller.dart
+
 import 'package:flutter/material.dart';
-import '../../../shared/components/form_widgets.dart';
+import 'package:front_application/shared/services/contrato_service.dart';
+
 import '../models/contrato.dart';
 
 class ContratoListController extends ChangeNotifier {
-  final valorBuscaController = TextEditingController();
-  final dataInicioController = TextEditingController();
-  final dataFimController = TextEditingController();
-
-  String chaveSelecionada = 'ID';
-
-  final List<String> chaves = [
-    'ID',
-    'Cliente',
-    'Obra',
-    'Status',
-    'Data de criação',
-  ];
-
+  final List<String> chaves = ['ID do orçamento', 'Nome do cliente'];
+  String chaveSelecionada = 'ID do orçamento';
+  final TextEditingController valorBuscaController = TextEditingController();
   List<Contrato> resultados = [];
+  final ContratoService _service = ContratoService();
 
   void atualizarChave(String novaChave) {
     chaveSelecionada = novaChave;
+    valorBuscaController.clear();
+    resultados = [];
     notifyListeners();
   }
 
-  void buscar(BuildContext context) {
+  Future<void> buscar(BuildContext context) async {
     final valor = valorBuscaController.text.trim();
-    final dataInicio = dataInicioController.text.trim();
-    final dataFim = dataFimController.text.trim();
+    if (valor.isEmpty) return;
 
-    if (chaveSelecionada == 'Data de criação') {
-      if (dataInicio.isEmpty || dataFim.isEmpty) {
-        mostrarMensagem(context, 'Preencha ambas as datas para buscar por intervalo', erro: true);
-        return;
-      }
-
-      final hoje = DateTime.now();
-      final dataFimParsed = _parseData(dataFim);
-      if (dataFimParsed != null && dataFimParsed.isAfter(hoje)) {
-        mostrarMensagem(context, 'Data final não pode ser maior que hoje', erro: true);
-        return;
-      }
-    }
-
-    if (valor.isEmpty && dataInicio.isEmpty && dataFim.isEmpty) {
-      mostrarMensagem(context, 'Buscando todos os contratos...');
-    }
-
-    resultados = [
-      Contrato(id: '1', status: 'EM EXECUÇÃO'),
-      Contrato(id: '2', status: 'EM ABERTO'),
-    ];
-
-    notifyListeners();
-  }
-
-  DateTime? _parseData(String data) {
     try {
-      final partes = data.split('/');
-      return DateTime(
-        int.parse(partes[2]),
-        int.parse(partes[1]),
-        int.parse(partes[0]),
-      );
+      List<Contrato> lista = [];
+      if (chaveSelecionada == 'ID do orçamento') {
+        final id = int.tryParse(valor);
+        if (id != null) {
+          try {
+            final contr = await _service.buscarContratoPorOrcamento(id);
+            lista = [contr];
+          } catch (_) {
+            lista = [];
+          }
+        }
+      } else {
+        final todos = await _service.listarContratosResumo();
+        lista =
+            todos
+                .where(
+                  (c) =>
+                      c.clienteNome != null &&
+                      c.clienteNome!.toLowerCase().contains(
+                        valor.toLowerCase(),
+                      ),
+                )
+                .toList();
+      }
+      resultados = lista;
     } catch (_) {
-      return null;
+      resultados = [];
     }
+    notifyListeners();
   }
 }

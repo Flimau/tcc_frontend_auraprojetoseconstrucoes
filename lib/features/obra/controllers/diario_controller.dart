@@ -1,163 +1,93 @@
-// lib/features/obra/controllers/diario_controller.dart
-
 import 'package:flutter/material.dart';
-import '../../../features/obra/models/diario_de_obra.dart';
+
 import '../../../shared/services/obra_service.dart';
+import '../models/diario_de_obra.dart';
 
 class DiarioController extends ChangeNotifier {
-  final String obraId;
+  final ObraService _service = ObraService();
 
-  DiarioController({required this.obraId}) {
-    listarDiarios();
-  }
+  bool isLoading = false;
+  List<DiarioDeObra> diarios = [];
 
-  List<Diario> diarios = [];
-  bool carregando = false;
-  String? erro;
-
-  // Campos do formulário para criar/editar
-  final dataController = TextEditingController();
-  final itensController = TextEditingController(); // itens separados por vírgula ou nova linha
-  final observacoesController = TextEditingController();
-
-  String? editandoId; // se não nulo, estamos editando o diário com esse ID
-
-  /// Lista todos os diários da obra
-  Future<void> listarDiarios() async {
-    carregando = true;
-    erro = null;
+  Future<void> fetchDiarios(int obraId) async {
+    isLoading = true;
     notifyListeners();
-
     try {
-      diarios = await ObraService.fetchDiarios(obraId);
-    } catch (e) {
-      erro = 'Erro ao listar diários: $e';
+      diarios = await _service.fetchDiarios(obraId);
+    } catch (_) {
       diarios = [];
-    } finally {
-      carregando = false;
-      notifyListeners();
     }
-  }
-
-  /// Prepara os campos para editar um diário existente
-  void prepararEdicao(Diario diario) {
-    editandoId = diario.id;
-    // Converte data ISO para DD/MM/AAAA
-    dataController.text = _formatarDataTela(diario.dataRegistro);
-    itensController.text = diario.itens.join('\n');
-    observacoesController.text = diario.observacoes ?? '';
+    isLoading = false;
     notifyListeners();
   }
 
-  /// Cancela o modo edição (limpa campos)
-  void cancelarEdicao() {
-    editandoId = null;
-    dataController.clear();
-    itensController.clear();
-    observacoesController.clear();
+  Future<void> criarDiario(
+    int obraId,
+    DiarioDeObra diario,
+    BuildContext context,
+  ) async {
+    isLoading = true;
     notifyListeners();
-  }
-
-  /// Salva (cria ou atualiza) um diário
-  Future<void> salvarDiario(BuildContext context, void Function(BuildContext, String, {bool erro}) mostrarMensagem) async {
-    final dataText = dataController.text.trim();
-    final itensText = itensController.text.trim();
-    final obsText = observacoesController.text.trim();
-
-    if (dataText.isEmpty || itensText.isEmpty) {
-      mostrarMensagem(context, 'Preencha data e itens do dia.', erro: true);
-      return;
-    }
-
-    final dataParsed = _parseData(dataText);
-    if (dataParsed == null) {
-      mostrarMensagem(context, 'Data inválida (use DD/MM/AAAA).', erro: true);
-      return;
-    }
-    final isoData = _toIsoDate(dataParsed);
-
-    final itensList = itensText
-        .split('\n')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-
-    final payload = {
-      'dataRegistro': isoData,
-      'itens': itensList,
-      'observacoes': obsText.isNotEmpty ? obsText : null,
-    };
-
-    carregando = true;
-    erro = null;
-    notifyListeners();
-
     try {
-      if (editandoId == null) {
-        // Cria
-        await ObraService.createDiario(obraId, payload);
-        mostrarMensagem(context, 'Diário criado com sucesso!');
-      } else {
-        // Atualiza
-        await ObraService.updateDiario(obraId, editandoId!, payload);
-        mostrarMensagem(context, 'Diário atualizado com sucesso!');
-      }
-      cancelarEdicao();
-      await listarDiarios(); // recarrega lista
+      await _service.createDiario(obraId, diario);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('diario criado com sucesso.')));
+      await fetchDiarios(obraId);
     } catch (e) {
-      mostrarMensagem(context, 'Erro ao salvar diário: $e', erro: true);
-    } finally {
-      carregando = false;
-      notifyListeners();
-    }
-  }
-
-  /// Exclui um diário
-  Future<void> excluirDiario(BuildContext context, String diarioId, void Function(BuildContext, String, {bool erro}) mostrarMensagem) async {
-    carregando = true;
-    erro = null;
-    notifyListeners();
-    try {
-      await ObraService.deleteDiario(obraId, diarioId);
-      mostrarMensagem(context, 'Diário excluído com sucesso!');
-      await listarDiarios();
-    } catch (e) {
-      mostrarMensagem(context, 'Erro ao excluir diário: $e', erro: true);
-    } finally {
-      carregando = false;
-      notifyListeners();
-    }
-  }
-
-  /// Converte string “DD/MM/AAAA” para DateTime ou retorna null
-  DateTime? _parseData(String data) {
-    try {
-      final partes = data.split('/');
-      return DateTime(
-        int.parse(partes[2]),
-        int.parse(partes[1]),
-        int.parse(partes[0]),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao criar diario: ${e.toString()}')),
       );
-    } catch (_) {
-      return null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
-  /// Converte DateTime para “YYYY-MM-DD”
-  String _toIsoDate(DateTime d) {
-    final ano = d.year.toString().padLeft(4, '0');
-    final mes = d.month.toString().padLeft(2, '0');
-    final dia = d.day.toString().padLeft(2, '0');
-    return '$ano-$mes-$dia';
+  Future<void> updateDiario(
+    int obraId,
+    int diarioId,
+    DiarioDeObra diario,
+    BuildContext context,
+  ) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      await _service.updateDiario(obraId, diarioId, diario);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('diario atualizado com sucesso.')));
+      await fetchDiarios(obraId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao atualizar diario: ${e.toString()}')),
+      );
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
-  /// Converte ISO “YYYY-MM-DD” para “DD/MM/AAAA”
-  String _formatarDataTela(String isoDate) {
+  Future<void> deleteDiario(
+    int obraId,
+    int diarioId,
+    BuildContext context,
+  ) async {
+    isLoading = true;
+    notifyListeners();
     try {
-      final parts = isoDate.split('-'); // [YYYY, MM, DD]
-      return '${parts[2].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[0]}';
-    } catch (_) {
-      return isoDate;
+      await _service.deleteDiario(obraId, diarioId);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('diario deletado com sucesso.')));
+      await fetchDiarios(obraId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao deletar diario: ${e.toString()}')),
+      );
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 }

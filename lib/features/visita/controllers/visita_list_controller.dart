@@ -1,61 +1,162 @@
+// ============================
+// lib/features/visita/controllers/visita_list_controller.dart
+// ============================
+
 import 'package:flutter/material.dart';
 
-import '../../../shared/components/form_widgets.dart';
+import '../../../shared/services/visita_service.dart';
 import '../models/visita.dart';
 
 class VisitaListController extends ChangeNotifier {
+  List<Visita> resultados = [];
+  bool carregando = false;
+  String? erro;
+
+  // Campos de busca / filtro
+  String chaveSelecionada = 'ID';
+  final List<String> chaves = ['ID', 'Cliente', 'DataVisita'];
+
   final valorBuscaController = TextEditingController();
   final dataInicioController = TextEditingController();
   final dataFimController = TextEditingController();
 
-  String chaveSelecionada = 'ID';
+  VisitaListController() {
+    buscarTodasVisitas();
+  }
 
-  final List<String> chaves = ['ID', 'Endereço', 'Cliente', 'Data da visita'];
-
-  List<Visita> resultados = [];
-
-  void atualizarChave(String novaChave) {
-    chaveSelecionada = novaChave;
+  void atualizarChave(String nova) {
+    chaveSelecionada = nova;
     notifyListeners();
   }
 
-  void buscar(BuildContext context) {
-    final valor = valorBuscaController.text.trim();
-    final dataInicio = dataInicioController.text.trim();
-    final dataFim = dataFimController.text.trim();
-
-    if (chaveSelecionada == 'Data da visita') {
-      if (dataInicio.isEmpty || dataFim.isEmpty) {
-        mostrarMensagem(
-          context,
-          'Preencha ambas as datas para buscar por intervalo',
-          erro: true,
-        );
-        return;
-      }
-
-      final hoje = DateTime.now();
-      final dataFimParsed = _parseData(dataFim);
-      if (dataFimParsed != null && dataFimParsed.isAfter(hoje)) {
-        mostrarMensagem(
-          context,
-          'Data final não pode ser maior que hoje',
-          erro: true,
-        );
-        return;
-      }
-    }
-
-    if (valor.isEmpty && dataInicio.isEmpty && dataFim.isEmpty) {
-      mostrarMensagem(context, 'Buscando todas as visitas...');
-    }
-
-    resultados = [
-      Visita(id: '1', endereco: 'Rua Projetada, 123', data: '15/05/2025'),
-      Visita(id: '2', endereco: 'Av. das Obras, 456', data: '16/05/2025'),
-    ];
-
+  /// Busca todas as visitas
+  Future<void> buscarTodasVisitas() async {
+    carregando = true;
+    erro = null;
     notifyListeners();
+
+    try {
+      resultados = await VisitaService.fetchAllVisitas();
+    } catch (e) {
+      erro = 'Erro ao carregar visitas: $e';
+      resultados = [];
+    } finally {
+      carregando = false;
+      notifyListeners();
+    }
+  }
+
+  /// Busca de acordo com o filtro selecionado
+  Future<void> buscar(BuildContext context) async {
+    final valor = valorBuscaController.text.trim();
+    final dataInicioText = dataInicioController.text.trim();
+    final dataFimText = dataFimController.text.trim();
+
+    // Filtro por DataVisita (período)
+    if (chaveSelecionada == 'DataVisita') {
+      if (dataInicioText.isEmpty || dataFimText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Preencha Data Início e Data Fim')),
+        );
+        return;
+      }
+      final inicio = _parseData(dataInicioText);
+      final fim = _parseData(dataFimText);
+      if (inicio == null || fim == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Formato de data inválido (DD/MM/AAAA)'),
+          ),
+        );
+        return;
+      }
+      if (fim.isBefore(inicio)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data final não pode ser antes da inicial'),
+          ),
+        );
+        return;
+      }
+
+      carregando = true;
+      erro = null;
+      notifyListeners();
+
+      try {
+        final isoInicio = _toIsoDate(inicio);
+        final isoFim = _toIsoDate(fim);
+        resultados = await VisitaService.fetchVisitasByPeriod(
+          isoInicio,
+          isoFim,
+        );
+      } catch (e) {
+        erro = 'Erro ao buscar por período: $e';
+        resultados = [];
+      } finally {
+        carregando = false;
+        notifyListeners();
+      }
+      return;
+    }
+
+    // Filtro por ID
+    if (chaveSelecionada == 'ID') {
+      final idNum = int.tryParse(valor);
+      if (idNum == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('ID inválido')));
+        return;
+      }
+      carregando = true;
+      erro = null;
+      resultados = [];
+      notifyListeners();
+
+      try {
+        final visita = await VisitaService.fetchVisitaById(valor);
+        resultados = [visita];
+      } catch (e) {
+        erro = 'Nenhuma visita encontrada para ID $valor';
+        resultados = [];
+      } finally {
+        carregando = false;
+        notifyListeners();
+      }
+      return;
+    }
+
+    // Filtro por Cliente (nome)
+    if (chaveSelecionada == 'Cliente') {
+      carregando = true;
+      erro = null;
+      notifyListeners();
+
+      try {
+        final todas = await VisitaService.fetchAllVisitas();
+        resultados =
+            todas
+                .where(
+                  (v) =>
+                      v.clienteNome.toLowerCase().contains(valor.toLowerCase()),
+                )
+                .toList();
+      } catch (e) {
+        erro = 'Erro ao filtrar por cliente: $e';
+        resultados = [];
+      } finally {
+        carregando = false;
+        notifyListeners();
+      }
+      return;
+    }
+
+    // Se o campo de texto estiver vazio, recarrega todas
+    if (valor.isEmpty) {
+      await buscarTodasVisitas();
+      return;
+    }
   }
 
   DateTime? _parseData(String data) {
@@ -68,6 +169,33 @@ class VisitaListController extends ChangeNotifier {
       );
     } catch (_) {
       return null;
+    }
+  }
+
+  String _toIsoDate(DateTime d) {
+    final ano = d.year.toString().padLeft(4, '0');
+    final mes = d.month.toString().padLeft(2, '0');
+    final dia = d.day.toString().padLeft(2, '0');
+    return '$ano-$mes-$dia';
+  }
+
+  /// Exclui uma visita e recarrega a lista
+  Future<void> deleteVisita(
+    BuildContext context,
+    String visitaId,
+    void Function(BuildContext, String, {bool erro}) mostrarMensagem,
+  ) async {
+    carregando = true;
+    notifyListeners();
+    try {
+      await VisitaService.deleteVisita(visitaId);
+      mostrarMensagem(context, 'Visita excluída com sucesso!');
+      await buscarTodasVisitas();
+    } catch (e) {
+      mostrarMensagem(context, 'Erro ao excluir visita: $e', erro: true);
+    } finally {
+      carregando = false;
+      notifyListeners();
     }
   }
 }

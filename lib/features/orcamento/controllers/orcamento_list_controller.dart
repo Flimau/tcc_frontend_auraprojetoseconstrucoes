@@ -1,82 +1,90 @@
+// lib/features/orcamento/controllers/orcamento_list_controller.dart
+
 import 'package:flutter/material.dart';
-import '../../../shared/components/form_widgets.dart';
-import '../models/orcamento.dart';
+import 'package:front_application/features/orcamento/models/orcamento.dart';
+import 'package:front_application/shared/services/orcamento_service.dart';
 
 class OrcamentoListController extends ChangeNotifier {
-  final valorBuscaController = TextEditingController();
-  final dataInicioController = TextEditingController();
-  final dataFimController = TextEditingController();
+  /// Lista de orçamentos carregados do back-end
+  List<Orcamento> orcamentos = [];
 
-  String chaveSelecionada = 'ID';
+  /// Flag para indicar se está carregando orçamentos
+  bool carregando = false;
 
-  final List<String> chaves = [
-    'ID',
-    'Descritivo',
-    'Tipo',
-    'Data de criação',
-  ];
+  /// Armazena mensagem de erro, caso ocorra
+  String? erro;
 
-  List<Orcamento> resultados = [];
+  /// Para evitar notifyListeners após dispose()
+  bool _isDisposed = false;
 
-  void atualizarChave(String novaChave) {
-    chaveSelecionada = novaChave;
-    notifyListeners();
+  /// Construtor: já dispara a busca inicial de todos os orçamentos
+  OrcamentoListController() {
+    fetchAllOrcamentos();
   }
 
-  void buscar(BuildContext context) {
-    final valor = valorBuscaController.text.trim();
-    final dataInicio = dataInicioController.text.trim();
-    final dataFim = dataFimController.text.trim();
-
-    // Validações específicas
-    if (chaveSelecionada == 'CPF' && valor.length != 14) {
-      mostrarMensagem(context, 'CPF inválido (formato: 000.000.000-00)', erro: true);
-      return;
-    }
-
-    if (chaveSelecionada == 'CNPJ' && valor.length != 18) {
-      mostrarMensagem(context, 'CNPJ inválido (formato: 00.000.000/0000-00)', erro: true);
-      return;
-    }
-
-    if (chaveSelecionada == 'Data de criação') {
-      if (dataInicio.isEmpty || dataFim.isEmpty) {
-        mostrarMensagem(context, 'Preencha ambas as datas para buscar por intervalo', erro: true);
-        return;
-      }
-
-      final hoje = DateTime.now();
-      final dataFimParsed = _parseData(dataFim);
-      if (dataFimParsed != null && dataFimParsed.isAfter(hoje)) {
-        mostrarMensagem(context, 'Data final não pode ser maior que hoje', erro: true);
-        return;
-      }
-    }
-
-    // Se todos os campos vazios, traz tudo
-    if (valor.isEmpty && dataInicio.isEmpty && dataFim.isEmpty) {
-      mostrarMensagem(context, 'Buscando todos os orçamentos...');
-    }
-
-    // Simulação de resultado
-    resultados = [
-      Orcamento(id: '1', descritivo: 'Projeto Arquitetônico', tipo: 'PROJETO'),
-      Orcamento(id: '2', descritivo: 'Reforma Banheiro', tipo: 'REFORMA'),
-    ];
-
-    notifyListeners();
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 
-  DateTime? _parseData(String data) {
+  /// Chama notifyListeners somente se o controller não estiver
+  /// já descartado (dispose)
+  void _safeNotify() {
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
+
+  // ======================================================
+  // 1. BUSCAR TODOS OS ORÇAMENTOS
+  // ======================================================
+
+  /// Busca todos os orçamentos no back-end e preenche [orcamentos].
+  Future<void> fetchAllOrcamentos() async {
+    carregando = true;
+    erro = null;
+    _safeNotify();
+
     try {
-      final partes = data.split('/');
-      return DateTime(
-        int.parse(partes[2]),
-        int.parse(partes[1]),
-        int.parse(partes[0]),
-      );
-    } catch (_) {
-      return null;
+      final lista = await OrcamentoService.fetchAllOrcamentos();
+      orcamentos = lista;
+    } catch (e) {
+      erro = 'Erro ao carregar orçamentos: $e';
+      orcamentos = [];
+    } finally {
+      carregando = false;
+      _safeNotify();
+    }
+  }
+
+  // ======================================================
+  // 2. DELETAR UM ORÇAMENTO
+  // ======================================================
+
+  /// Exclui o orçamento com [id]. Em caso de sucesso, recarrega a lista.
+  ///
+  /// Recebe [context] e [mostrarMensagem] para exibir feedback via Snackbar.
+  Future<void> deleteOrcamento(
+    BuildContext context,
+    void Function(BuildContext, String, {bool erro}) mostrarMensagem,
+    int id,
+  ) async {
+    carregando = true;
+    erro = null;
+    _safeNotify();
+
+    try {
+      await OrcamentoService.deleteOrcamento(id);
+      mostrarMensagem(context, 'Orçamento excluído com sucesso!');
+      // Após excluir, recarrega a lista completa
+      await fetchAllOrcamentos();
+    } catch (e) {
+      erro = 'Erro ao excluir orçamento: $e';
+      mostrarMensagem(context, erro!, erro: true);
+    } finally {
+      carregando = false;
+      _safeNotify();
     }
   }
 }

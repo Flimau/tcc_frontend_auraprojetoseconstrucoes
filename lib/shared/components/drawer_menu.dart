@@ -21,22 +21,23 @@ class DrawerMenu extends StatelessWidget {
           ),
           _item(context, 'Home', '/home'),
           _item(context, 'Usuários', '/tela_listar_usuarios'),
-          _item(context, 'Orçamentos', '/orcamento'),
-          _item(context, 'Obras', '/tela_listar_obras'),
+          _item(context, 'Ativar Conta', '/tela_ativacao_usuario'),
+          _item(context, 'Orçamentos', '/tela_listar_orcamentos'),
           _item(context, 'Contratos', '/tela_listar_contratos'),
-          _item(context, 'Visitas', '/tela_listar_visitas'),
-          _item(context, 'Ativar conta', '/tela_ativacao_usuario'),
+          _item(context, 'Obras', '/tela_listar_obras'),
+          _item(context, 'Agenda', '/tela_listar_agenda'),
+          _item(context, 'Kanban', '/tela_kanban_obras'),
         ],
       ),
     );
   }
 
-  ListTile _item(BuildContext context, String titulo, String rota) {
+  Widget _item(BuildContext context, String label, String route) {
     return ListTile(
-      title: Text(titulo),
+      title: Text(label),
       onTap: () {
         Navigator.pop(context); // fecha o drawer
-        Navigator.pushNamed(context, rota);
+        Navigator.pushNamed(context, route);
       },
     );
   }

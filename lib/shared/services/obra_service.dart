@@ -1,115 +1,100 @@
+// lib/shared/services/obra_service.dart
+
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../constants/constants.dart';
 import '../../features/obra/models/diario_de_obra.dart';
 import '../../features/obra/models/obra.dart';
 
 class ObraService {
-  // Se você tiver uma constante, por exemplo:
-  // static const String _baseUrl = Constants.apiBaseUrl + '/obras';
-  // Ajuste o caminho conforme configurar o Constants.
-  static const String _baseUrl = 'http://localhost:8080/api/obras';
+  static const String _baseUrl = AppConstants.baseUrl;
 
-  /// Busca todas as obras
-  static Future<List<Obra>> fetchAllObras() async {
-    final resp = await http.get(Uri.parse(_baseUrl));
+  // 1) GET /api/obras → lista todas as obras
+  Future<List<Obra>> fetchAllObras() async {
+    final resp = await http.get(Uri.parse('$_baseUrl/api/obras'));
     if (resp.statusCode == 200) {
-      final List<dynamic> listaJson = json.decode(resp.body);
-      return listaJson.map((e) => Obra.fromJson(e)).toList();
+      final List<dynamic> jsonList = jsonDecode(resp.body);
+      return jsonList
+          .map((e) => Obra.fromDtoJson(e as Map<String, dynamic>))
+          .toList();
     } else {
-      throw Exception('Erro ao buscar obras: ${resp.statusCode}');
+      throw Exception('Erro ao buscar obras (${resp.statusCode})');
     }
   }
 
-  /// Busca uma obra por ID
-  static Future<Obra> fetchObraById(String id) async {
-    final resp = await http.get(Uri.parse('$_baseUrl/$id'));
+  // 2) GET /api/obras/{id} → busca obra por ID
+  Future<Obra> buscarObraPorId(int id) async {
+    final resp = await http.get(Uri.parse('$_baseUrl/api/obras/$id'));
     if (resp.statusCode == 200) {
-      return Obra.fromJson(json.decode(resp.body));
+      return Obra.fromDtoJson(jsonDecode(resp.body) as Map<String, dynamic>);
     } else {
-      throw Exception('Erro ao buscar obra $id: ${resp.statusCode}');
+      throw Exception('Erro ao buscar obra (${resp.statusCode})');
     }
   }
 
-  /// Cria uma nova obra (sem executor e sem status, o back já inicializa status=PLANEJADA)
-  static Future<Obra> createObra(Map<String, dynamic> payload) async {
+  // 3) POST /api/obras → cria nova obra
+  Future<Obra> criarObra(Obra obra) async {
+    final payload = obra.toJson(); // monta { “cliente”:{“id”:...}, ... }
     final resp = await http.post(
-      Uri.parse(_baseUrl),
+      Uri.parse('$_baseUrl/api/obras'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(payload),
+      body: jsonEncode(payload),
     );
-    if (resp.statusCode == 200 || resp.statusCode == 201) {
-      return Obra.fromJson(json.decode(resp.body));
+    if (resp.statusCode == 201) {
+      return Obra.fromDtoJson(jsonDecode(resp.body) as Map<String, dynamic>);
     } else {
-      throw Exception('Erro ao criar obra: ${resp.statusCode} ${resp.body}');
+      throw Exception('Falha ao criar obra (${resp.statusCode})');
     }
   }
 
-  /// Atualiza a obra (campos gerais: cliente, orçamento, executor, datas, contratoUrl)
-  static Future<Obra> updateObra(
-    String id,
-    Map<String, dynamic> payload,
-  ) async {
+  // 4) PUT /api/obras/{id} → atualiza obra (sem alterar status)
+  Future<Obra> atualizarObra(int id, Obra obra) async {
+    final payload = obra.toJson();
     final resp = await http.put(
-      Uri.parse('$_baseUrl/$id'),
+      Uri.parse('$_baseUrl/api/obras/$id'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(payload),
+      body: jsonEncode(payload),
     );
     if (resp.statusCode == 200) {
-      return Obra.fromJson(json.decode(resp.body));
+      return Obra.fromDtoJson(jsonDecode(resp.body) as Map<String, dynamic>);
     } else {
-      throw Exception(
-        'Erro ao atualizar obra $id: ${resp.statusCode} ${resp.body}',
-      );
+      throw Exception('Falha ao atualizar obra (${resp.statusCode})');
     }
   }
 
-  /// Deleta a obra
-  static Future<void> deleteObra(String id) async {
-    final resp = await http.delete(Uri.parse('$_baseUrl/$id'));
-    if (resp.statusCode != 204 && resp.statusCode != 200) {
+  // 5) DELETE /api/obras/{id}
+  Future<void> deleteObra(int id) async {
+    final resp = await http.delete(Uri.parse('$_baseUrl/api/obras/$id'));
+    if (resp.statusCode != 204) {
       throw Exception('Erro ao deletar obra $id: ${resp.statusCode}');
     }
   }
 
-  /// Atribui um executor à obra, validando datas
-  static Future<Obra> assignExecutor(String obraId, String executorId) async {
+  // 6) PUT /api/obras/{id}/status/{novoStatus}
+  Future<Obra> changeStatus(int id, String novoStatus) async {
     final resp = await http.put(
-      Uri.parse('$_baseUrl/$obraId/executor/$executorId'),
+      Uri.parse('$_baseUrl/api/obras/$id/status/$novoStatus'),
     );
     if (resp.statusCode == 200) {
-      return Obra.fromJson(json.decode(resp.body));
+      return Obra.fromDtoJson(jsonDecode(resp.body) as Map<String, dynamic>);
     } else {
-      throw Exception(
-        'Erro ao atribuir executor $executorId à obra $obraId: ${resp.statusCode} ${resp.body}',
-      );
+      throw Exception('Erro ao alterar status da obra $id: ${resp.statusCode}');
     }
   }
 
-  /// Altera apenas o status da obra (PLANEJADA, EM_ANDAMENTO, PENDENTE, CONCLUIDA, CANCELADA)
-  static Future<Obra> changeStatus(String obraId, String novoStatus) async {
-    final resp = await http.put(
-      Uri.parse('$_baseUrl/$obraId/status/$novoStatus'),
-    );
+  // 7) GET /api/obras/kanban
+  Future<Map<String, List<Obra>>> fetchKanban() async {
+    final resp = await http.get(Uri.parse('$_baseUrl/api/obras/kanban'));
     if (resp.statusCode == 200) {
-      return Obra.fromJson(json.decode(resp.body));
-    } else {
-      throw Exception(
-        'Erro ao alterar status da obra $obraId: ${resp.statusCode} ${resp.body}',
-      );
-    }
-  }
-
-  /// Retorna dados do Kanban (mapa de listas agrupadas por status)
-  static Future<Map<String, List<Obra>>> fetchKanban() async {
-    final resp = await http.get(Uri.parse('$_baseUrl/kanban'));
-    if (resp.statusCode == 200) {
-      final Map<String, dynamic> mapaJson = json.decode(resp.body);
+      final Map<String, dynamic> mapaJson = jsonDecode(resp.body);
       final Map<String, List<Obra>> resultado = {};
       mapaJson.forEach((status, lista) {
         resultado[status] =
-            (lista as List).map((e) => Obra.fromJson(e)).toList();
+            (lista as List)
+                .map((e) => Obra.fromDtoJson(e as Map<String, dynamic>))
+                .toList();
       });
       return resultado;
     } else {
@@ -117,31 +102,32 @@ class ObraService {
     }
   }
 
-  /// Retorna obras cujo cronograma se sobrepõe a um período
-  static Future<List<Obra>> fetchByPeriod(
-    String dataInicio,
-    String dataFim,
-  ) async {
+  // 8) GET /api/obras/calendario?dataInicio=YYYY-MM-DD&dataFim=YYYY-MM-DD
+  Future<List<Obra>> fetchByPeriod(String dataInicio, String dataFim) async {
     final uri = Uri.parse(
-      '$_baseUrl/calendario',
+      '$_baseUrl/api/obras/calendario',
     ).replace(queryParameters: {'dataInicio': dataInicio, 'dataFim': dataFim});
     final resp = await http.get(uri);
     if (resp.statusCode == 200) {
-      final List<dynamic> listaJson = json.decode(resp.body);
-      return listaJson.map((e) => Obra.fromJson(e)).toList();
+      final List<dynamic> listaJson = jsonDecode(resp.body);
+      return listaJson
+          .map((e) => Obra.fromDtoJson(e as Map<String, dynamic>))
+          .toList();
     } else {
-      throw Exception(
-        'Erro ao buscar obras no período: ${resp.statusCode} ${resp.body}',
-      );
+      throw Exception('Erro ao buscar por período: ${resp.statusCode}');
     }
   }
 
-  /// DIÁRIOS DE OBRA – listar
-  static Future<List<DiarioModel>> fetchDiarios(String obraId) async {
-    final resp = await http.get(Uri.parse('$_baseUrl/$obraId/diarios'));
+  // 9) GET /api/obras/{obraId}/diarios
+  Future<List<DiarioDeObra>> fetchDiarios(int obraId) async {
+    final resp = await http.get(
+      Uri.parse('$_baseUrl/api/obras/$obraId/diarios'),
+    );
     if (resp.statusCode == 200) {
-      final List<dynamic> listaJson = json.decode(resp.body);
-      return listaJson.map((e) => DiarioModel.fromJson(e)).toList();
+      final List<dynamic> listaJson = jsonDecode(resp.body);
+      return listaJson
+          .map((e) => DiarioDeObra.fromJson(e as Map<String, dynamic>))
+          .toList();
     } else {
       throw Exception(
         'Erro ao buscar diários da obra $obraId: ${resp.statusCode}',
@@ -149,54 +135,51 @@ class ObraService {
     }
   }
 
-  /// DIÁRIOS DE OBRA – criar
-  static Future<DiarioModel> createDiario(
-    String obraId,
-    Map<String, dynamic> payload,
-  ) async {
+  // 10) POST /api/obras/{obraId}/diarios
+  Future<DiarioDeObra> createDiario(int obraId, DiarioDeObra diario) async {
     final resp = await http.post(
-      Uri.parse('$_baseUrl/$obraId/diarios'),
+      Uri.parse('$_baseUrl/api/obras/$obraId/diarios'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(payload),
+      body: jsonEncode(diario.toJson()),
     );
-    if (resp.statusCode == 200 || resp.statusCode == 201) {
-      return DiarioModel.fromJson(json.decode(resp.body));
+    if (resp.statusCode == 201) {
+      return DiarioDeObra.fromJson(
+        jsonDecode(resp.body) as Map<String, dynamic>,
+      );
     } else {
       throw Exception(
-        'Erro ao criar diário na obra $obraId: ${resp.statusCode} ${resp.body}',
+        'Erro ao criar diário na obra $obraId: ${resp.statusCode}',
       );
     }
   }
 
-  /// DIÁRIOS DE OBRA – atualizar
-  static Future<DiarioModel> updateDiario(
-    String obraId,
-    String diarioId,
-    Map<String, dynamic> payload,
+  // 11) PUT /api/obras/{obraId}/diarios/{id}
+  Future<DiarioDeObra> updateDiario(
+    int obraId,
+    int diarioId,
+    DiarioDeObra diario,
   ) async {
     final resp = await http.put(
-      Uri.parse('$_baseUrl/$obraId/diarios/$diarioId'),
+      Uri.parse('$_baseUrl/api/obras/$obraId/diarios/$diarioId'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(payload),
+      body: jsonEncode(diario.toJson()),
     );
     if (resp.statusCode == 200) {
-      return DiarioModel.fromJson(json.decode(resp.body));
-    } else {
-      throw Exception(
-        'Erro ao atualizar diário $diarioId na obra $obraId: ${resp.statusCode} ${resp.body}',
+      return DiarioDeObra.fromJson(
+        jsonDecode(resp.body) as Map<String, dynamic>,
       );
+    } else {
+      throw Exception('Erro ao atualizar diário $diarioId: ${resp.statusCode}');
     }
   }
 
-  /// DIÁRIOS DE OBRA – deletar
-  static Future<void> deleteDiario(String obraId, String diarioId) async {
+  // 12) DELETE /api/obras/{obraId}/diarios/{id}
+  Future<void> deleteDiario(int obraId, int diarioId) async {
     final resp = await http.delete(
-      Uri.parse('$_baseUrl/$obraId/diarios/$diarioId'),
+      Uri.parse('$_baseUrl/api/obras/$obraId/diarios/$diarioId'),
     );
-    if (resp.statusCode != 204 && resp.statusCode != 200) {
-      throw Exception(
-        'Erro ao deletar diário $diarioId da obra $obraId: ${resp.statusCode}',
-      );
+    if (resp.statusCode != 204) {
+      throw Exception('Erro ao deletar diário $diarioId: ${resp.statusCode}');
     }
   }
 }

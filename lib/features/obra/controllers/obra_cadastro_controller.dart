@@ -4,202 +4,105 @@ import '../../../shared/services/obra_service.dart';
 import '../models/obra.dart';
 
 class ObraCadastroController extends ChangeNotifier {
-  /// Se null → estamos criando; se não null → estamos editando a obra de ID igual a obraId
-  String? obraId;
+  final ObraService _service = ObraService();
 
-  // Controllers para os campos do formulário (todos como texto, pois vêm de TextField)
-  final clienteIdController = TextEditingController();
-  final orcamentoIdController = TextEditingController();
-  final executorIdController = TextEditingController(); // opcional
+  final TextEditingController clienteIdController = TextEditingController();
+  final TextEditingController orcamentoIdController = TextEditingController();
+  final TextEditingController dataInicioController = TextEditingController();
+  final TextEditingController dataFimController = TextEditingController();
+  final TextEditingController contratoUrlController = TextEditingController();
+  final TextEditingController executorIdController = TextEditingController();
 
-  final dataInicioController =
-      TextEditingController(); // formato "DD/MM/AAAA" no input
-  final dataFimController =
-      TextEditingController(); // formato "DD/MM/AAAA" no input
+  int? obraIdExistente;
+  String statusExistente = 'PLANEJADA'; // default para novo
 
-  final contratoUrlController = TextEditingController(); // opcional
+  bool isLoading = false;
 
-  // Campo status
-  String status = 'PLANEJADA'; // default ao criar
   final List<String> statusObra = [
     'PLANEJADA',
     'EM_ANDAMENTO',
-    'PENDENTE',
     'CONCLUIDA',
     'CANCELADA',
   ];
 
-  bool carregando = false;
-  String? erro; // mensagem de erro ao salvar
-  String? sucesso; // mensagem de sucesso ao salvar
+  
 
-  ObraCadastroController({this.obraId});
-
-  /// Se estivermos em modo "edição", carrega os dados da obra existente
-  /// para popular os campos do formulário:
-  Future<void> carregarObraParaEdicao() async {
-    if (obraId == null) return;
-
-    carregando = true;
+  Future<void> carregarObraExistente(int id) async {
+    isLoading = true;
     notifyListeners();
-
     try {
-      final Obra obra = await ObraService.fetchObraById(obraId!);
-      // Preenche controllers com valores atuais
+      final obra = await _service.buscarObraPorId(id);
+      obraIdExistente = obra.id;
       clienteIdController.text = obra.clienteId.toString();
       orcamentoIdController.text = obra.orcamentoId.toString();
-      executorIdController.text = obra.executorId?.toString() ?? '';
-      dataInicioController.text = _formatarDataDeTela(obra.dataInicio);
-      dataFimController.text = _formatarDataDeTela(obra.dataFim);
+      dataInicioController.text = obra.dataInicio;
+      dataFimController.text = obra.dataFim;
       contratoUrlController.text = obra.contratoUrl ?? '';
-      status = obra.status;
-    } catch (e) {
-      erro = 'Erro ao carregar dados da obra para edição: $e';
-    } finally {
-      carregando = false;
-      notifyListeners();
+      executorIdController.text = obra.executorId?.toString() ?? '';
+      statusExistente = obra.status;
+    } catch (_) {
+      obraIdExistente = null;
     }
-  }
-
-  void atualizarStatus(String novoStatus) {
-    status = novoStatus;
+    isLoading = false;
     notifyListeners();
   }
 
-  /// Salva a obra: se obraId == null → CREATE; se não → UPDATE
-  Future<void> salvarObra(
-    BuildContext context,
-    void Function(BuildContext, String, {bool erro}) mostrarMensagem,
-  ) async {
-    final String clienteIdText = clienteIdController.text.trim();
-    final String orcamentoIdText = orcamentoIdController.text.trim();
-    final String executorIdText = executorIdController.text.trim();
-    final String dataInicioText = dataInicioController.text.trim();
-    final String dataFimText = dataFimController.text.trim();
-    final String contratoUrlText = contratoUrlController.text.trim();
-
-    // 1) Validações básicas
-    if (clienteIdText.isEmpty ||
-        orcamentoIdText.isEmpty ||
-        dataInicioText.isEmpty ||
-        dataFimText.isEmpty) {
-      mostrarMensagem(
-        context,
-        'Preencha todos os campos obrigatórios (cliente, orçamento, datas).',
-        erro: true,
+  Future<void> salvarObra(BuildContext context) async {
+    final cliId = int.tryParse(clienteIdController.text.trim());
+    final orcId = int.tryParse(orcamentoIdController.text.trim());
+    final dataIni = dataInicioController.text.trim();
+    final dataFi = dataFimController.text.trim();
+    if (cliId == null || orcId == null || dataIni.isEmpty || dataFi.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Preencha todos os campos obrigatórios.')),
       );
       return;
     }
-
-    final DateTime? dataInicioParsed = _parseData(dataInicioText);
-    final DateTime? dataFimParsed = _parseData(dataFimText);
-
-    if (dataInicioParsed == null || dataFimParsed == null) {
-      mostrarMensagem(
-        context,
-        'Formato de data inválido (use DD/MM/AAAA).',
-        erro: true,
-      );
-      return;
-    }
-    if (dataFimParsed.isBefore(dataInicioParsed)) {
-      mostrarMensagem(
-        context,
-        'Data final não pode ser anterior à data inicial.',
-        erro: true,
-      );
-      return;
-    }
-
-    // 2) Monta o payload JSON para enviar ao back
-    Map<String, dynamic> payload = {
-      'cliente': {'id': int.parse(clienteIdText)},
-      'orcamento': {'id': int.parse(orcamentoIdText)},
-      'dataInicio': _toIsoDate(dataInicioParsed),
-      'dataFim': _toIsoDate(dataFimParsed),
-      'contratoUrl': contratoUrlText.isNotEmpty ? contratoUrlText : null,
-      'status':
-          status, // sempre informamos o status (mesmo na criação, back já inicializa como PLANEJADA, mas aqui passamos explicitamente)
-    };
-
-    // Se houver executorId preenchido, adicionamos ao payload
-    if (executorIdText.isNotEmpty) {
-      payload['executor'] = {'id': int.parse(executorIdText)};
-    }
-
-    carregando = true;
-    erro = null;
-    sucesso = null;
+    isLoading = true;
     notifyListeners();
+
+    // Monta o objeto Obra
+    final obra = Obra(
+      id: obraIdExistente,
+      clienteId: cliId,
+      clienteNome: '', // o back retorna, não enviamos aqui
+      orcamentoId: orcId,
+      status: statusExistente,
+      dataInicio: dataIni,
+      dataFim: dataFi,
+      contratoUrl:
+          contratoUrlController.text.trim().isEmpty
+              ? null
+              : contratoUrlController.text.trim(),
+      executorId:
+          executorIdController.text.trim().isEmpty
+              ? null
+              : int.parse(executorIdController.text.trim()),
+      executorNome: null,
+    );
 
     try {
-      Obra obraRetornada;
-      if (obraId == null) {
-        // Criação
-        obraRetornada = await ObraService.createObra(payload);
-        sucesso = 'Obra criada com sucesso! ID: ${obraRetornada.id}';
+      if (obraIdExistente == null) {
+        // Cria nova obra
+        await _service.criarObra(obra);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Obra criada com sucesso.')));
       } else {
-        // Edição
-        obraRetornada = await ObraService.updateObra(obraId!, payload);
-        sucesso = 'Obra atualizada com sucesso!';
-
-        // Se usuário alterou/selecionou executor, chamar endpoint específico de atribuição de executor
-        if (executorIdText.isNotEmpty) {
-          try {
-            await ObraService.assignExecutor(obraId!, executorIdText);
-          } catch (_) {
-            // Se falhar ao atribuir executor, apenas mostramos mensagem de erro mas não interrompemos
-            mostrarMensagem(
-              context,
-              'Obra atualizada, mas falha ao atribuir executor.',
-              erro: true,
-            );
-          }
-        }
+        // Atualiza obra existente (sem mudar status aqui)
+        await _service.atualizarObra(obraIdExistente!, obra);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Obra atualizada com sucesso.')));
       }
-
-      // Exibe a mensagem de sucesso
-      mostrarMensagem(context, sucesso!);
-
-      // (Opcional) Aqui você pode limpar FORM ou navegar de volta, dependendo de como sua UI está estruturada
     } catch (e) {
-      erro = 'Erro ao salvar obra: $e';
-      mostrarMensagem(context, erro!, erro: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao salvar obra: ${e.toString()}')),
+      );
     } finally {
-      carregando = false;
+      isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Converte string “DD/MM/AAAA” para DateTime ou retorna null se inválida
-  DateTime? _parseData(String data) {
-    try {
-      final partes = data.split('/');
-      return DateTime(
-        int.parse(partes[2]),
-        int.parse(partes[1]),
-        int.parse(partes[0]),
-      );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Converte DateTime para “YYYY-MM-DD”
-  String _toIsoDate(DateTime d) {
-    final ano = d.year.toString().padLeft(4, '0');
-    final mes = d.month.toString().padLeft(2, '0');
-    final dia = d.day.toString().padLeft(2, '0');
-    return '$ano-$mes-$dia';
-  }
-
-  /// Recebe uma data no formato ISO “YYYY-MM-DD” e converte para “DD/MM/AAAA”
-  String _formatarDataDeTela(String isoDate) {
-    try {
-      final parts = isoDate.split('-'); // [YYYY, MM, DD]
-      return '${parts[2].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[0]}';
-    } catch (_) {
-      return isoDate;
-    }
-  }
 }

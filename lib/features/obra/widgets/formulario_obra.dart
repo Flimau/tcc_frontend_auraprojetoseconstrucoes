@@ -1,13 +1,10 @@
 // lib/features/obra/widgets/formulario_obra.dart
 
 import 'package:flutter/material.dart';
+import 'package:front_application/shared/utils/formatters.dart';
 import 'package:provider/provider.dart';
 
-import '../../../shared/components/form_widgets.dart';   // InputCampo, InputCampoMultiline
-import '../../../shared/components/dropdown_padrao.dart'; // DropdownPadrao
-import '../../../shared/components/titulo_secao.dart';
-import '../../../shared/components/card_container.dart';
-
+import '../../../shared/components/form_widgets.dart'; // InputCampo, InputCampoMultiline
 import '../controllers/obra_cadastro_controller.dart';
 
 class FormularioObra extends StatelessWidget {
@@ -29,7 +26,7 @@ class FormularioObra extends StatelessWidget {
             label: 'Cliente (ID)',
             icone: Icons.person,
             controller: controller.clienteIdController,
-            mascaras: [],
+            mascaras: [dataMask],
           ),
           const SizedBox(height: 16),
 
@@ -38,7 +35,6 @@ class FormularioObra extends StatelessWidget {
             label: 'Orçamento (ID)',
             icone: Icons.request_quote,
             controller: controller.orcamentoIdController,
-            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
 
@@ -47,7 +43,6 @@ class FormularioObra extends StatelessWidget {
             label: 'Executor (ID, opcional)',
             icone: Icons.build,
             controller: controller.executorIdController,
-            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
 
@@ -56,7 +51,7 @@ class FormularioObra extends StatelessWidget {
             label: 'Data Início (DD/MM/AAAA)',
             icone: Icons.calendar_today,
             controller: controller.dataInicioController,
-            keyboardType: TextInputType.datetime,
+            mascaras: [dataMask],
           ),
           const SizedBox(height: 16),
 
@@ -65,7 +60,7 @@ class FormularioObra extends StatelessWidget {
             label: 'Data Fim (DD/MM/AAAA)',
             icone: Icons.calendar_today,
             controller: controller.dataFimController,
-            keyboardType: TextInputType.datetime,
+            mascaras: [dataMask],
           ),
           const SizedBox(height: 16),
 
@@ -74,27 +69,25 @@ class FormularioObra extends StatelessWidget {
             label: 'Contrato URL (opcional)',
             icone: Icons.link,
             controller: controller.contratoUrlController,
-            keyboardType: TextInputType.url,
+            tipoTeclado: TextInputType.url,
           ),
           const SizedBox(height: 16),
 
           // Status da Obra
           const Text(
             'Status da Obra',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          DropdownPadrao(
-            label: 'Selecione o Status',
-            itens: controller.statusObra,
-            valorSelecionado: controller.status,
-            onChanged: (val) {
-              if (val != null) controller.atualizarStatus(val);
-            },
-          ),
+          //commentei pq na criação da obra o status vem como PLANEJADA
+          // DropdownPadrao(
+          //   label: 'Selecione o Status',
+          //   itens: controller.statusObra,
+          //   valorSelecionado: controller.statusExistente,
+          //   onChanged: (val) {
+          //     if (val != null) controller.atualizarStatus(val);
+          //   },
+          // ),
         ],
       ),
     );

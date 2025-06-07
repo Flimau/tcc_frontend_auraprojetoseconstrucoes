@@ -11,6 +11,8 @@ class InputCampo extends StatelessWidget {
   final List<TextInputFormatter>? mascaras;
   final String? Function(String?)? validador;
   final FocusNode? focusNode;
+  final bool enabled;
+  final int? maxLinhas;
 
   const InputCampo({
     super.key,
@@ -21,6 +23,8 @@ class InputCampo extends StatelessWidget {
     this.mascaras,
     this.validador,
     this.focusNode,
+    this.enabled = true,
+    this.maxLinhas,
   });
 
   @override
@@ -31,8 +35,10 @@ class InputCampo extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         keyboardType: tipoTeclado,
+        enabled: enabled,
         inputFormatters: mascaras,
         validator: validador,
+        maxLines: maxLinhas,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icone),

@@ -1,7 +1,12 @@
+// lib/features/visita/screens/tela_listar_visitas.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../shared/components/form_widgets.dart';
+import '../../../shared/utils/formatters.dart';
+import '../../../theme/colors.dart';
+import '../../../theme/text_styles.dart';
 import '../controllers/visita_list_controller.dart';
 import 'tela_cadastro_visita.dart';
 
@@ -17,10 +22,12 @@ class TelaListarVisitas extends StatelessWidget {
           return Scaffold(
             appBar: const AppBarCustom(titulo: 'Listar Visitas'),
             drawer: const DrawerMenu(),
+            backgroundColor: AppColors.background,
             body: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
+                  // ===== Filtros =====
                   Row(
                     children: [
                       Expanded(
@@ -34,30 +41,35 @@ class TelaListarVisitas extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      if (controller.chaveSelecionada == 'Data da visita') ...[
+
+                      // Se "DataVisita" selecionado, exibimos intervalo de datas
+                      if (controller.chaveSelecionada == 'DataVisita') ...[
                         Expanded(
-                          child: TextFormField(
+                          child: InputCampo(
+                            label: 'Início (DD/MM/AAAA)',
+                            icone: Icons.calendar_month,
                             controller: controller.dataInicioController,
-                            decoration: const InputDecoration(
-                              labelText: 'Início',
-                            ),
+                            tipoTeclado: TextInputType.datetime,
+                            mascaras: [dataMask],
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: TextFormField(
+                          child: InputCampo(
+                            label: 'Fim (DD/MM/AAAA)',
+                            icone: Icons.calendar_month,
                             controller: controller.dataFimController,
-                            decoration: const InputDecoration(labelText: 'Fim'),
+                            tipoTeclado: TextInputType.datetime,
+                            mascaras: [dataMask],
                           ),
                         ),
                       ] else ...[
                         Expanded(
                           flex: 3,
-                          child: TextFormField(
+                          child: InputCampo(
+                            label: 'Valor',
+                            icone: Icons.search,
                             controller: controller.valorBuscaController,
-                            decoration: const InputDecoration(
-                              labelText: 'Valor',
-                            ),
                           ),
                         ),
                       ],
@@ -65,7 +77,6 @@ class TelaListarVisitas extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: BotaoPadrao(
@@ -90,31 +101,133 @@ class TelaListarVisitas extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Divider(),
+                  const Divider(color: AppColors.subtitle),
+
+                  // ===== Lista de resultados =====
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: controller.resultados.length,
-                      itemBuilder: (context, index) {
-                        final visita = controller.resultados[index];
-                        return Card(
-                          child: ListTile(
-                            title: Text('Endereço: ${visita.endereco}'),
-                            subtitle: Text('Data: ${visita.data}'),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const TelaCadastroVisita(),
+                    child:
+                        controller.carregando
+                            ? const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                              ),
+                            )
+                            : controller.erro != null
+                            ? Center(
+                              child: Text(
+                                controller.erro!,
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            )
+                            : controller.resultados.isEmpty
+                            ? Center(
+                              child: Text(
+                                'Nenhuma visita encontrada.',
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.subtitle,
+                                ),
+                              ),
+                            )
+                            : ListView.builder(
+                              itemCount: controller.resultados.length,
+                              itemBuilder: (context, index) {
+                                final visita = controller.resultados[index];
+                                return CardContainer(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              visita.endereco.logradouro,
+                                              style: AppTextStyles.subtitle
+                                                  .copyWith(
+                                                    color: AppColors.primary,
+                                                  ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Cliente: ${visita.clienteNome}',
+                                              style: AppTextStyles.body,
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Data: ${visita.dataVisita}',
+                                              style: AppTextStyles.body,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: AppColors.primary,
+                                        ),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (_) =>
+                                                      const TelaCadastroVisita(),
+                                              settings: RouteSettings(
+                                                arguments: visita.id,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: AppColors.error,
+                                        ),
+                                        onPressed: () {
+                                          controller.deleteVisita(
+                                            context,
+                                            visita.id,
+                                            (ctx, msg, {erro = false}) {
+                                              final snackBar = SnackBar(
+                                                content: Text(
+                                                  msg,
+                                                  style: AppTextStyles.body
+                                                      .copyWith(
+                                                        color: AppColors.white,
+                                                      ),
+                                                ),
+                                                backgroundColor:
+                                                    erro
+                                                        ? AppColors.error
+                                                        : AppColors.success,
+                                                duration: const Duration(
+                                                  seconds: 2,
+                                                ),
+                                              );
+                                              ScaffoldMessenger.of(ctx)
+                                                ..removeCurrentSnackBar()
+                                                ..showSnackBar(snackBar);
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
                             ),
-                          ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ),

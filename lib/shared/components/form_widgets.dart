@@ -6,6 +6,7 @@ export 'card_container.dart';
 export 'drawer_menu.dart';
 export 'dropdown_padrao.dart';
 export 'input_campo.dart';
+export 'input_campo_busca.dart';
 export 'input_campo_multiline.dart';
 export 'mensagem_snackbar.dart';
 export 'tabela_generica.dart';
