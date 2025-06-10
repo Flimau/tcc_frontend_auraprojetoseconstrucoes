@@ -76,12 +76,18 @@ class OrcamentoListController extends ChangeNotifier {
 
     try {
       await OrcamentoService.deleteOrcamento(id);
-      mostrarMensagem(context, 'Orçamento excluído com sucesso!');
+
+      if (context.mounted) {
+        mostrarMensagem(context, 'Orçamento excluído com sucesso!');
+      }
+
       // Após excluir, recarrega a lista completa
       await fetchAllOrcamentos();
     } catch (e) {
       erro = 'Erro ao excluir orçamento: $e';
-      mostrarMensagem(context, erro!, erro: true);
+      if (context.mounted) {
+        mostrarMensagem(context, erro!, erro: true);
+      }
     } finally {
       carregando = false;
       _safeNotify();

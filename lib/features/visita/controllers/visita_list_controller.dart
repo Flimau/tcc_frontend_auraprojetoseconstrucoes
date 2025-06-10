@@ -13,7 +13,7 @@ class VisitaListController extends ChangeNotifier {
   String? erro;
 
   // Campos de busca / filtro
-  String chaveSelecionada = 'ID';
+  String chaveSelecionada = 'DataVisita';
   final List<String> chaves = ['ID', 'Cliente', 'DataVisita'];
 
   final valorBuscaController = TextEditingController();
@@ -190,7 +190,10 @@ class VisitaListController extends ChangeNotifier {
     try {
       await VisitaService.deleteVisita(visitaId);
       mostrarMensagem(context, 'Visita excluída com sucesso!');
-      await buscarTodasVisitas();
+      //aguarda o rebuild terminar antes de carregar as visitas
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await buscarTodasVisitas();
+      });
     } catch (e) {
       mostrarMensagem(context, 'Erro ao excluir visita: $e', erro: true);
     } finally {

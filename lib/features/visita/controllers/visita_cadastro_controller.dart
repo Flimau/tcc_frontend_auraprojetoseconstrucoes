@@ -1,25 +1,24 @@
-// lib/features/visita/controllers/visita_cadastro_controller.dart
-
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:front_application/constants/constants.dart';
 import 'package:front_application/shared/services/cep_service.dart';
+import 'package:front_application/shared/services/visita_service.dart';
 import 'package:http/http.dart' as http;
 
-import '../../../shared/services/visita_service.dart';
 import '../../usuario/models/usuario.dart';
 import '../models/visita.dart';
 
 class VisitaCadastroController extends ChangeNotifier {
   String? visitaId;
 
-  // --- Campos do formulário ---
+  // --- Controllers do formulário ---
   final clienteIdController = TextEditingController();
   final dataVisitaController = TextEditingController(); // “DD/MM/AAAA”
   final descricaoController = TextEditingController();
 
-  // --- Campos de endereço ---
+  // --- Endereço ---
   final cepController = TextEditingController();
   final ruaController = TextEditingController();
   final numeroController = TextEditingController();
@@ -29,37 +28,32 @@ class VisitaCadastroController extends ChangeNotifier {
   final estadoController = TextEditingController();
   final cepFocus = FocusNode();
 
-  // Callback para exibir Snackbars
-  BuildContext? _dummyContext;
-  void Function(BuildContext, String, {bool erro}) _dummyMostrarMensagem =
-      (c, t, {erro = false}) {};
+  // --- Imagens ---
+  final List<File> imagensSelecionadas = []; // Novas (locais)
+  final List<String> imagensServidor = [];   // Já salvas no back
 
-  // Lista de URLs de fotos
-  List<String> fotosPaths = [];
-
-  // Dropdown de clientes
+  // --- Clientes dropdown ---
   List<Usuario> clientes = [];
   bool carregandoClientes = false;
   String? erroClientes;
 
-  // Estado de submissão
+  // --- Estado geral ---
   bool carregando = false;
   String? erro;
   String? sucesso;
-
-  // Flag para evitar notifyListeners depois de dispose()
   bool _isDisposed = false;
+
+  // --- Contexto e callback para snackbar ---
+  BuildContext? _dummyContext;
+  void Function(BuildContext, String, {bool erro}) _dummyMostrarMensagem =
+      (c, t, {erro = false}) {};
 
   VisitaCadastroController({this.visitaId}) {
     _fetchClientes();
 
-    // Autofill de endereço ao perder foco no CEP
     cepFocus.addListener(() {
       if (!cepFocus.hasFocus) {
-        final cepTexto = cepController.text.trim().replaceAll(
-          RegExp(r'\D'),
-          '',
-        );
+        final cepTexto = cepController.text.trim().replaceAll(RegExp(r'\D'), '');
         if (cepTexto.length == 8 && _dummyContext != null) {
           buscarEnderecoPorCep(cepTexto, _dummyContext!, _dummyMostrarMensagem);
         }
@@ -74,14 +68,10 @@ class VisitaCadastroController extends ChangeNotifier {
     super.dispose();
   }
 
-  // Usar este método em vez de notifyListeners diretamente:
   void _safeNotify() {
-    if (!_isDisposed) {
-      notifyListeners();
-    }
+    if (!_isDisposed) notifyListeners();
   }
 
-  /// Fornece context e função de snackbar para buscarEnderecoPorCep
   void setContextParaBusca(
     BuildContext context,
     void Function(BuildContext, String, {bool erro}) mostrarMensagem,
@@ -90,40 +80,32 @@ class VisitaCadastroController extends ChangeNotifier {
     _dummyMostrarMensagem = mostrarMensagem;
   }
 
-  /// Carrega todos os usuários do tipo CLIENTE para o dropdown
   Future<void> _fetchClientes() async {
     carregandoClientes = true;
     erroClientes = null;
     _safeNotify();
 
     try {
-      final uri = Uri.parse(
-        '${AppConstants.baseUrl}/api/usuario/listar',
-      ).replace(queryParameters: {'tipoUsuario': 'CLIENTE'});
+      final uri = Uri.parse('${AppConstants.baseUrl}/api/usuario/listar')
+          .replace(queryParameters: {'tipoUsuario': 'CLIENTE'});
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        final List<dynamic> listaJson =
-            json.decode(response.body) as List<dynamic>;
-        clientes =
-            listaJson
-                .map((json) => Usuario.fromJson(json as Map<String, dynamic>))
-                .toList();
+        final List<dynamic> listaJson = json.decode(response.body);
+        clientes = listaJson
+            .map((json) => Usuario.fromJson(json as Map<String, dynamic>))
+            .toList();
       } else {
-        erroClientes =
-            'Erro ao carregar clientes: código ${response.statusCode}';
-        clientes = [];
+        erroClientes = 'Erro ao carregar clientes: ${response.statusCode}';
       }
     } catch (e) {
-      erroClientes = 'Erro de rede ao carregar clientes: $e';
-      clientes = [];
+      erroClientes = 'Erro de rede: $e';
     } finally {
       carregandoClientes = false;
       _safeNotify();
     }
   }
 
-  /// Ao perder foco no CEP, busca o endereço via CEP Service
   Future<void> buscarEnderecoPorCep(
     String cep,
     BuildContext context,
@@ -137,11 +119,10 @@ class VisitaCadastroController extends ChangeNotifier {
       estadoController.text = resultado['estado'] ?? '';
       _safeNotify();
     } else {
-      mostrarMensagem(context, 'CEP não encontrado ou inválido', erro: true);
+      mostrarMensagem(context, 'CEP inválido ou não encontrado.', erro: true);
     }
   }
 
-  /// Carrega dados para edição (se visitaId != null)
   Future<void> carregarVisitaParaEdicao() async {
     if (visitaId == null) return;
     carregando = true;
@@ -152,9 +133,7 @@ class VisitaCadastroController extends ChangeNotifier {
       clienteIdController.text = visita.clienteId.toString();
       dataVisitaController.text = _formatarDataTela(visita.dataVisita);
       descricaoController.text = visita.descricao;
-      fotosPaths = visita.fotos;
 
-      // Preenche campos de endereço
       final end = visita.endereco;
       cepController.text = end.cep;
       ruaController.text = end.logradouro;
@@ -163,6 +142,9 @@ class VisitaCadastroController extends ChangeNotifier {
       bairroController.text = end.bairro;
       cidadeController.text = end.cidade;
       estadoController.text = end.siglaEstado;
+
+      imagensServidor.clear();
+      imagensServidor.addAll(visita.fotos);
     } catch (e) {
       erro = 'Erro ao carregar visita: $e';
     } finally {
@@ -171,19 +153,32 @@ class VisitaCadastroController extends ChangeNotifier {
     }
   }
 
-  /// Adiciona uma foto (URL ou path base64)
-  void adicionarFoto(String path) {
-    fotosPaths.add(path);
+  void adicionarImagemLocal(File file) {
+    imagensSelecionadas.add(file);
     _safeNotify();
   }
 
-  /// Remove uma foto
-  void removerFoto(String path) {
-    fotosPaths.remove(path);
+  void removerImagemLocal(File file) {
+    imagensSelecionadas.remove(file);
     _safeNotify();
   }
 
-  /// Cria ou atualiza visita usando VisitaService
+  Future<void> removerImagemServidor(String url) async {
+    imagensServidor.remove(url);
+    _safeNotify();
+
+    try {
+      await VisitaService.deleteImagem(url);
+    } catch (e) {
+      print('Erro ao excluir imagem do servidor: $e');
+      _dummyMostrarMensagem(
+        _dummyContext!,
+        'Imagem removida localmente, mas falha ao excluir no servidor.',
+        erro: true,
+      );
+    }
+  }
+
   Future<void> salvarVisita(
     BuildContext context,
     void Function(BuildContext, String, {bool erro}) mostrarMensagem,
@@ -201,33 +196,28 @@ class VisitaCadastroController extends ChangeNotifier {
     final cidadeText = cidadeController.text.trim();
     final estadoText = estadoController.text.trim();
 
-    // Validações
     if (clienteIdText.isEmpty || dataText.isEmpty || cepText.isEmpty) {
       mostrarMensagem(context, 'Preencha Cliente, Data e CEP.', erro: true);
       return;
     }
+
     final clienteIdInt = int.tryParse(clienteIdText);
     if (clienteIdInt == null) {
-      mostrarMensagem(context, 'ID de cliente inválido.', erro: true);
+      mostrarMensagem(context, 'ID do cliente inválido.', erro: true);
       return;
     }
-    final dataParsed = _parseData(dataText);
-    if (dataParsed == null) {
-      mostrarMensagem(
-        context,
-        'Formato de data inválido (DD/MM/AAAA).',
-        erro: true,
-      );
-      return;
-    }
-    final isoDate = _toIsoDate(dataParsed);
 
-    // Validação de endereço
+    final dataParsed = _parseData(dataText);
+    if (dataParsed == null || dataParsed.year < 1900) {
+      mostrarMensagem(context, 'Data inválida.', erro: true);
+      return;
+    }
+
     if (ruaText.isEmpty ||
         bairroText.isEmpty ||
         cidadeText.isEmpty ||
         estadoText.isEmpty) {
-      mostrarMensagem(context, 'CEP inválido ou incompleto.', erro: true);
+      mostrarMensagem(context, 'Endereço incompleto.', erro: true);
       return;
     }
 
@@ -237,6 +227,8 @@ class VisitaCadastroController extends ChangeNotifier {
     _safeNotify();
 
     try {
+      final novasUrls = await VisitaService.uploadMultiplasImagens(imagensSelecionadas);
+
       final visitaParaEnvio = Visita(
         id: visitaId ?? '',
         clienteId: clienteIdInt,
@@ -251,9 +243,9 @@ class VisitaCadastroController extends ChangeNotifier {
           siglaEstado: estadoText,
         ),
         descricao: descricaoText,
-        dataVisita: isoDate,
-        fotos: fotosPaths,
-        videos: <String>[],
+        dataVisita: _toIsoDate(dataParsed),
+        fotos: [...imagensServidor, ...novasUrls],
+        videos: [],
         usadaEmOrcamento: false,
       );
 
@@ -266,6 +258,8 @@ class VisitaCadastroController extends ChangeNotifier {
         sucesso = 'Visita atualizada com sucesso!';
         mostrarMensagem(context, sucesso!);
       }
+
+      imagensSelecionadas.clear();
     } catch (e) {
       erro = 'Erro ao salvar visita: $e';
       mostrarMensagem(context, erro!, erro: true);
@@ -288,17 +282,13 @@ class VisitaCadastroController extends ChangeNotifier {
     }
   }
 
-  String _toIsoDate(DateTime d) {
-    final ano = d.year.toString().padLeft(4, '0');
-    final mes = d.month.toString().padLeft(2, '0');
-    final dia = d.day.toString().padLeft(2, '0');
-    return '$ano-$mes-$dia';
-  }
+  String _toIsoDate(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   String _formatarDataTela(String isoDate) {
     try {
       final parts = isoDate.split('-');
-      return '${parts[2].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[0]}';
+      return '${parts[2]}/${parts[1]}/${parts[0]}';
     } catch (_) {
       return isoDate;
     }

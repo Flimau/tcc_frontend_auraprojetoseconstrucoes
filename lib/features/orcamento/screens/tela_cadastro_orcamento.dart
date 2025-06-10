@@ -1,9 +1,11 @@
 // lib/features/orcamento/screens/tela_cadastro_orcamento.dart
 
 import 'package:flutter/material.dart';
+import 'package:front_application/shared/services/orcamento_service.dart';
 import 'package:provider/provider.dart';
 
 import '../../../shared/components/form_widgets.dart'; // AppBarCustom, DrawerMenu, BotaoPadrao, BotaoVoltar
+import '../../../shared/utils/pdf_utils.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/text_styles.dart';
 import '../controllers/orcamento_cadastro_controller.dart';
@@ -114,6 +116,28 @@ class _TelaCadastroOrcamentoState extends State<TelaCadastroOrcamento> {
                               : 'Atualizar Orçamento',
                       onPressed:
                           () => controller.saveOrcamento(ctx, _mostrarMensagem),
+                    ),
+
+                  const SizedBox(height: 12),
+                  if (controller.orcamentoId != null)
+                    BotaoPadrao(
+                      texto: 'Gerar PDF',
+                      onPressed: () async {
+                        try {
+                          final bytes =
+                              await OrcamentoService.gerarPdfOrcamento(
+                                controller.orcamentoId!,
+                              );
+                          await PdfUtils.abrirOuSalvarPdf(
+                            bytes,
+                            'orcamento_${controller.orcamentoId}.pdf',
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erro ao gerar PDF: $e')),
+                          );
+                        }
+                      },
                     ),
 
                   const SizedBox(height: 12),

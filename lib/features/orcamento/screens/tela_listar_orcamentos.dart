@@ -3,7 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../shared/components/form_widgets.dart'; // AppBarCustom, DrawerMenu, BotaoPadrao, CardContainer
+import '../../../shared/components/form_widgets.dart';
+import '../../../shared/services/orcamento_service.dart';
+import '../../../shared/utils/pdf_utils.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/text_styles.dart';
 import '../controllers/orcamento_list_controller.dart';
@@ -26,7 +28,7 @@ class TelaListarOrcamentos extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Botões de ação: Recarregar e Cadastrar
+                  // Botões de ação
                   Row(
                     children: [
                       Expanded(
@@ -55,7 +57,6 @@ class TelaListarOrcamentos extends StatelessWidget {
                   const SizedBox(height: 24),
                   const Divider(),
 
-                  // Estado de carregamento / erro / lista vazia
                   if (controller.carregando)
                     const Expanded(
                       child: Center(child: CircularProgressIndicator()),
@@ -85,7 +86,6 @@ class TelaListarOrcamentos extends StatelessWidget {
                       ),
                     )
                   else
-                    // Listagem de orçamentos
                     Expanded(
                       child: ListView.builder(
                         itemCount: controller.orcamentos.length,
@@ -95,9 +95,7 @@ class TelaListarOrcamentos extends StatelessWidget {
                             padding: const EdgeInsets.only(bottom: 12),
                             child: CardContainer(
                               child: ListTile(
-                                tileColor:
-                                    AppColors
-                                        .white, // substituído AppColors.surface
+                                tileColor: AppColors.white,
                                 title: Text(
                                   'ID ${orc.id} • ${orc.clienteNome}',
                                   style: AppTextStyles.body.copyWith(
@@ -115,7 +113,7 @@ class TelaListarOrcamentos extends StatelessWidget {
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    // Botão Editar
+                                    // Editar
                                     IconButton(
                                       icon: Icon(
                                         Icons.edit,
@@ -135,7 +133,37 @@ class TelaListarOrcamentos extends StatelessWidget {
                                         );
                                       },
                                     ),
-                                    // Botão Excluir
+                                    // Gerar PDF
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.picture_as_pdf,
+                                        color: AppColors.accent,
+                                      ),
+                                      tooltip: 'Gerar PDF',
+                                      onPressed: () async {
+                                        try {
+                                          final bytes =
+                                              await OrcamentoService.gerarPdfOrcamento(
+                                                orc.id,
+                                              );
+                                          await PdfUtils.abrirOuSalvarPdf(
+                                            bytes,
+                                            'orcamento_${orc.id}.pdf',
+                                          );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Erro ao gerar PDF: $e',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                    // Excluir
                                     IconButton(
                                       icon: Icon(
                                         Icons.delete,

@@ -1,6 +1,7 @@
 // lib/features/visita/screens/tela_listar_visitas.dart
 
 import 'package:flutter/material.dart';
+import 'package:front_application/shared/utils/converters.dart';
 import 'package:provider/provider.dart';
 
 import '../../../shared/components/form_widgets.dart';
@@ -165,7 +166,7 @@ class TelaListarVisitas extends StatelessWidget {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              'Data: ${visita.dataVisita}',
+                                              'Data: ${formatarDataParaBr(visita.dataVisita)}',
                                               style: AppTextStyles.body,
                                             ),
                                           ],
@@ -196,10 +197,15 @@ class TelaListarVisitas extends StatelessWidget {
                                           color: AppColors.error,
                                         ),
                                         onPressed: () {
+                                          final currentContext = context;
+
                                           controller.deleteVisita(
-                                            context,
+                                            currentContext,
                                             visita.id,
                                             (ctx, msg, {erro = false}) {
+                                              if (!currentContext.mounted)
+                                                return;
+
                                               final snackBar = SnackBar(
                                                 content: Text(
                                                   msg,
@@ -216,7 +222,10 @@ class TelaListarVisitas extends StatelessWidget {
                                                   seconds: 2,
                                                 ),
                                               );
-                                              ScaffoldMessenger.of(ctx)
+
+                                              ScaffoldMessenger.of(
+                                                  currentContext,
+                                                )
                                                 ..removeCurrentSnackBar()
                                                 ..showSnackBar(snackBar);
                                             },

@@ -1,6 +1,7 @@
 // lib/features/orcamento/services/orcamento_service.dart
 
 import 'dart:convert'; // Para jsonEncode e jsonDecode
+import 'dart:typed_data';
 
 import 'package:front_application/constants/constants.dart'; // Base URL da API
 import 'package:front_application/features/orcamento/models/orcamento.dart'; // Modelo do Orcamento
@@ -120,6 +121,19 @@ class OrcamentoService {
       throw Exception(
         'Erro ao excluir orçamento ID $id. Código: ${response.statusCode}',
       );
+    }
+  }
+
+  /// Gera e baixa o PDF do orçamento pelo ID.
+  static Future<Uint8List> gerarPdfOrcamento(int id) async {
+    final uri = Uri.parse('${AppConstants.baseUrl}/api/orcamento/$id/pdf');
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return response.bodyBytes; // PDF binário
+    } else {
+      throw Exception('Erro ao gerar PDF. Código: ${response.statusCode}');
     }
   }
 }

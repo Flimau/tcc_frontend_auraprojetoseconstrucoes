@@ -105,16 +105,14 @@ class Visita {
   });
 
   factory Visita.fromJson(Map<String, dynamic> json) {
-    // “cliente” no JSON é um objeto com “id” e “nome”
-    final clienteJson = json['cliente'] as Map<String, dynamic>? ?? {};
     final fotosJson = json['fotos'] as List<dynamic>? ?? [];
     final videosJson = json['videos'] as List<dynamic>? ?? [];
     final enderecoJson = json['endereco'] as Map<String, dynamic>? ?? {};
 
     return Visita(
       id: json['id'].toString(),
-      clienteId: (clienteJson['id'] as num?)?.toInt() ?? 0,
-      clienteNome: clienteJson['nome'] as String? ?? '',
+      clienteId: json['clienteId']?.toInt() ?? 0,
+      clienteNome: json['clienteNome'] as String? ?? '',
       endereco: EnderecoDTO.fromJson(enderecoJson),
       descricao: json['descricao'] as String? ?? '',
       dataVisita: json['dataVisita'] as String? ?? '',

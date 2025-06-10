@@ -3,12 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../shared/components/form_widgets.dart'; // CardContainer, TituloSecao, InputCampo, DropdownPadrao, BotaoPadrao
+import '../../../shared/components/form_widgets.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/text_styles.dart';
 import '../../usuario/models/usuario.dart';
 import '../../visita/models/visita.dart';
 import '../controllers/orcamento_cadastro_controller.dart';
+import '../models/orcamento.dart';
 
 class FormularioOrcamento extends StatefulWidget {
   const FormularioOrcamento({Key? key}) : super(key: key);
@@ -18,10 +19,10 @@ class FormularioOrcamento extends StatefulWidget {
 }
 
 class _FormularioOrcamentoState extends State<FormularioOrcamento> {
-  // Controllers para os campos de item
   final nomeItemController = TextEditingController();
   final valorItemController = TextEditingController();
   final quantidadeController = TextEditingController();
+  OrcamentoItem? itemEmEdicao;
 
   @override
   void dispose() {
@@ -34,8 +35,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<OrcamentoCadastroController>();
-
-    // Calcula o total de todos os itens adicionados
     final double totalOrcamento = controller.itens.fold(
       0.0,
       (sum, item) =>
@@ -45,7 +44,7 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // === Seção de Informações Gerais ===
+        // === Dados Gerais ===
         CardContainer(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -53,22 +52,15 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const TituloSecao('Informações Gerais'),
-
                 const SizedBox(height: 12),
 
-                // Dropdown de Cliente
+                // Cliente
                 if (controller.carregandoClientes)
                   const Center(child: CircularProgressIndicator())
                 else if (controller.erroClientes != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      controller.erroClientes!,
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.error,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                  Text(
+                    controller.erroClientes!,
+                    style: AppTextStyles.body.copyWith(color: AppColors.error),
                   )
                 else
                   DropdownPadrao(
@@ -93,19 +85,13 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Dropdown de Visita (opcional)
+                // Visita
                 if (controller.carregandoVisitas)
                   const Center(child: CircularProgressIndicator())
                 else if (controller.erroVisitas != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      controller.erroVisitas!,
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.error,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                  Text(
+                    controller.erroVisitas!,
+                    style: AppTextStyles.body.copyWith(color: AppColors.error),
                   )
                 else
                   DropdownPadrao(
@@ -133,8 +119,41 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Campo Descrição
-                InputCampo(
+                // Data
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () async {
+                        final selecionada = await showDatePicker(
+                          context: context,
+                          initialDate:
+                              controller.dataSelecionada ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (selecionada != null) {
+                          controller.dataSelecionada = selecionada;
+                          controller.notifyListeners();
+                        }
+                      },
+                      child: Text(
+                        controller.dataSelecionada != null
+                            ? 'Data: ${controller.dataSelecionada!.toLocal().toString().split(" ")[0]}'
+                            : 'Selecionar Data',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.text,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Descrição
+                InputCampoMultiline(
                   label: 'Descrição',
                   icone: Icons.description,
                   controller: controller.descricaoController,
@@ -142,7 +161,7 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Dropdown de Tipo de Orçamento
+                // Tipo
                 DropdownPadrao(
                   label: 'Tipo de Orçamento',
                   itens: controller.tipos,
@@ -156,7 +175,7 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Dropdown de Subtipo (aparece se tipoSelecionado != null)
+                // Subtipo
                 if (controller.tipoSelecionado != null)
                   DropdownPadrao(
                     label: 'Subtipo de Orçamento',
@@ -173,7 +192,7 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Checkbox “Com Material?”
+                // Checkbox Com Material
                 Row(
                   children: [
                     Checkbox(
@@ -195,7 +214,7 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
           ),
         ),
 
-        // === Seção de Itens do Orçamento (se comMaterial for true) ===
+        // === Seção de Itens ===
         if (controller.comMaterial) ...[
           const SizedBox(height: 24),
           CardContainer(
@@ -205,19 +224,13 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const TituloSecao('Itens do Orçamento'),
-
                   const SizedBox(height: 12),
-
-                  // Campo Nome do Item
                   InputCampo(
                     label: 'Nome do Item',
                     icone: Icons.label,
                     controller: nomeItemController,
                   ),
-
                   const SizedBox(height: 12),
-
-                  // Campo Valor Unitário
                   InputCampo(
                     label: 'Valor Unitário',
                     icone: Icons.attach_money,
@@ -226,83 +239,57 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
                       decimal: true,
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
-                  // Campo Quantidade
                   InputCampo(
                     label: 'Quantidade',
                     icone: Icons.format_list_numbered,
                     controller: quantidadeController,
                     tipoTeclado: TextInputType.number,
                   ),
-
                   const SizedBox(height: 12),
-
-                  // Botão Adicionar Item
                   Align(
                     alignment: Alignment.centerRight,
                     child: BotaoPadrao(
-                      texto: 'Adicionar Item',
+                      texto:
+                          itemEmEdicao == null
+                              ? 'Adicionar Item'
+                              : 'Atualizar Item',
                       onPressed: () {
                         final nome = nomeItemController.text.trim();
                         final valorText = valorItemController.text
                             .trim()
                             .replaceAll(',', '.');
                         final qtdText = quantidadeController.text.trim();
-
                         if (nome.isEmpty ||
                             valorText.isEmpty ||
-                            qtdText.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'Preencha nome, valor e quantidade do item.',
-                              ),
-                              backgroundColor: AppColors.error,
-                              duration: const Duration(seconds: 2),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                            ),
-                          );
+                            qtdText.isEmpty)
                           return;
-                        }
-
                         final valor = double.tryParse(valorText);
                         final qtd = int.tryParse(qtdText);
-                        if (valor == null || qtd == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'Valor ou quantidade inválidos.',
-                              ),
-                              backgroundColor: AppColors.error,
-                              duration: const Duration(seconds: 2),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                            ),
-                          );
-                          return;
-                        }
+                        if (valor == null || qtd == null) return;
 
-                        // Adiciona o item no controller
-                        controller.addItem(
-                          descricao: nome,
-                          quantidade: qtd,
-                          valorUnitario: valor,
-                        );
+                        if (itemEmEdicao != null) {
+                          final novoItem = OrcamentoItem(
+                            id: itemEmEdicao!.id,
+                            descricao: nome,
+                            quantidade: qtd,
+                            valorUnitario: valor,
+                            subtotal: qtd * valor,
+                          );
+
+                          final index = controller.itens.indexOf(itemEmEdicao!);
+                          if (index != -1) {
+                            controller.itens[index] = novoItem;
+                          }
+
+                          itemEmEdicao = null;
+                        } else {
+                          controller.addItem(
+                            descricao: nome,
+                            quantidade: qtd,
+                            valorUnitario: valor,
+                          );
+                        }
 
                         nomeItemController.clear();
                         valorItemController.clear();
@@ -311,10 +298,7 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
                       },
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
-                  // Lista de Itens Adicionados
                   if (controller.itens.isEmpty)
                     Text(
                       'Nenhum item adicionado ainda.',
@@ -334,32 +318,41 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
                             (item.quantidade * item.valorUnitario);
                         return ListTile(
                           tileColor: AppColors.background,
-                          title: Text(
-                            item.descricao,
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.text,
-                            ),
-                          ),
+                          title: Text(item.descricao),
                           subtitle: Text(
                             'R\$ ${item.valorUnitario.toStringAsFixed(2)} x ${item.quantidade}',
-                            style: AppTextStyles.subtitle.copyWith(
-                              color: AppColors.subtitle,
-                            ),
                           ),
-                          trailing: Text(
-                            'R\$ ${subtotal.toStringAsFixed(2)}',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.accent,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: AppColors.primary,
+                                ),
+                                onPressed: () {
+                                  nomeItemController.text = item.descricao;
+                                  valorItemController.text =
+                                      item.valorUnitario.toString();
+                                  quantidadeController.text =
+                                      item.quantidade.toString();
+                                  controller.removeItem(item);
+                                  setState(() => itemEmEdicao = item);
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: AppColors.error,
+                                ),
+                                onPressed: () => controller.removeItem(item),
+                              ),
+                            ],
                           ),
                         );
                       },
                     ),
-
                   const SizedBox(height: 16),
-
-                  // Total Estimado
                   Text(
                     'Total estimado: R\$ ${totalOrcamento.toStringAsFixed(2)}',
                     style: AppTextStyles.headline.copyWith(

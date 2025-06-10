@@ -14,10 +14,10 @@ import '../features/obra/screens/tela_listar_diarios.dart';
 import '../features/obra/screens/tela_listar_obras.dart';
 import '../features/orcamento/screens/tela_cadastro_orcamento.dart';
 import '../features/orcamento/screens/tela_listar_orcamentos.dart';
-import '../features/usuario/screens/tela_ativacao_usuario.dart';
+import '../features/auth/screens/tela_ativacao_usuario.dart';
 import '../features/usuario/screens/tela_cadastro_usuario.dart';
 import '../features/usuario/screens/tela_listar_usuarios.dart';
-import '../features/usuario/screens/tela_login.dart';
+import '../features/auth/screens/tela_login.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {

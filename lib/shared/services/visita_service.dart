@@ -1,21 +1,20 @@
-// ============================
-// lib/shared/services/visita_service.dart
-// ============================
-
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:front_application/constants/constants.dart';
+import 'package:front_application/shared/services/http_client_utf8.dart';
 import 'package:http/http.dart' as http;
 
 import '../../features/visita/models/visita.dart';
 
 class VisitaService {
   static const String _basePath = '/api/visitaTecnica';
+  static final _client = HttpClientUtf8();
 
   /// Busca todas as visitas (GET /api/visitaTecnica)
   static Future<List<Visita>> fetchAllVisitas() async {
     final uri = Uri.parse('${AppConstants.baseUrl}$_basePath');
-    final response = await http.get(uri);
+    final response = await _client.get(uri);
 
     if (response.statusCode == 200) {
       final List<dynamic> listaJson =
@@ -33,7 +32,7 @@ class VisitaService {
   /// Busca uma visita por ID (GET /api/visitaTecnica/{id})
   static Future<Visita> fetchVisitaById(String id) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$_basePath/$id');
-    final response = await http.get(uri);
+    final response = await _client.get(uri);
 
     if (response.statusCode == 200) {
       return Visita.fromJson(
@@ -54,7 +53,7 @@ class VisitaService {
     final uri = Uri.parse('${AppConstants.baseUrl}$_basePath').replace(
       queryParameters: {'dataInicio': isoDataInicio, 'dataFim': isoDataFim},
     );
-    final response = await http.get(uri);
+    final response = await _client.get(uri);
 
     if (response.statusCode == 200) {
       final List<dynamic> listaJson =
@@ -73,7 +72,7 @@ class VisitaService {
   static Future<Visita> createVisita(Visita visita) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$_basePath');
     final payload = visita.toCadastroJson();
-    final response = await http.post(
+    final response = await _client.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: json.encode(payload),
@@ -92,7 +91,7 @@ class VisitaService {
   static Future<Visita> updateVisita(String id, Visita visita) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$_basePath/$id');
     final payload = visita.toCadastroJson();
-    final response = await http.put(
+    final response = await _client.put(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: json.encode(payload),
@@ -112,10 +111,69 @@ class VisitaService {
   /// Exclui uma visita (DELETE /api/visitaTecnica/{id})
   static Future<void> deleteVisita(String id) async {
     final uri = Uri.parse('${AppConstants.baseUrl}$_basePath/$id');
-    final response = await http.delete(uri);
+    final response = await _client.delete(uri);
 
     if (response.statusCode != 204) {
       throw Exception('Falha ao excluir visita: status ${response.statusCode}');
+    }
+  }
+
+  /// Envia uma imagem e retorna a URL
+  static Future<String?> uploadImagem(File file) async {
+    final uri = Uri.parse('${AppConstants.baseUrl}$_basePath/upload');
+
+    final request = http.MultipartRequest('POST', uri);
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    try {
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final body = await response.stream.bytesToString();
+        final jsonResponse = json.decode(body);
+
+        if (jsonResponse['url'] != null && jsonResponse['url'] is String) {
+          return jsonResponse['url'];
+        } else {
+          throw Exception('Resposta de upload sem campo "url" válido');
+        }
+      } else {
+        throw Exception('Falha ao fazer upload: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Erro no uploadImagem: $e');
+      return null;
+    }
+  }
+
+  /// Upload de várias imagens
+  static Future<List<String>> uploadMultiplasImagens(
+    List<File> arquivos,
+  ) async {
+    List<String> urls = [];
+
+    for (final file in arquivos) {
+      final url = await uploadImagem(file);
+      if (url != null) {
+        urls.add(url);
+      } else {
+        throw Exception('Erro ao enviar uma das imagens.');
+      }
+    }
+
+    return urls;
+  }
+
+  /// Exclui imagem pelo parâmetro de URL (DELETE com ?url=...)
+  static Future<void> deleteImagem(String url) async {
+    final uri = Uri.parse(
+      '${AppConstants.baseUrl}$_basePath/upload',
+    ).replace(queryParameters: {'url': url});
+
+    final response = await _client.delete(uri);
+
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      throw Exception('Falha ao excluir imagem: status ${response.statusCode}');
     }
   }
 }
