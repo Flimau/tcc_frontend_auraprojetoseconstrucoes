@@ -21,6 +21,7 @@ class OrcamentoCadastroController extends ChangeNotifier {
   String? tipoSelecionado;
   String? subtipoSelecionado;
   bool comMaterial = false;
+  double totalOrcamento = 0;
 
   final List<OrcamentoItem> itens = [];
 
@@ -175,11 +176,21 @@ class OrcamentoCadastroController extends ChangeNotifier {
         subtotal: quantidade * valorUnitario,
       ),
     );
+    recalcularTotal();
     _safeNotify();
   }
 
   void removeItem(OrcamentoItem item) {
     itens.remove(item);
+    recalcularTotal();
+    _safeNotify();
+  }
+
+  void recalcularTotal() {
+    totalOrcamento = itens.fold(
+      0.0,
+      (sum, item) => sum + (item.subtotal ?? 0.0),
+    );
     _safeNotify();
   }
 
@@ -230,6 +241,7 @@ class OrcamentoCadastroController extends ChangeNotifier {
       comMaterial: comMaterial,
       itens: itens,
       dataCriacao: dataSelecionada ?? DateTime.now(),
+      totalOrcamento: totalOrcamento,
     );
 
     carregando = true;

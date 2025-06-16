@@ -1,25 +1,26 @@
-// lib/shared/services/contrato_service.dart
-
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:front_application/constants/constants.dart';
-import 'package:front_application/features/contrato/models/contrato.dart';
+import 'package:front_application/features/contrato/models/contrato_dto.dart';
+import 'package:front_application/features/contrato/models/contrato_resumo.dart';
 import 'package:http/http.dart' as http;
+
+import 'http_client_utf8.dart';
 
 class ContratoService {
   String get _baseUrl => AppConstants.baseUrl;
+  static final _client = HttpClientUtf8();
+  final http.Client _pureClient = http.Client();
 
-  /// 1) Lista todos contratos (resumos) → GET /api/contrato
-  Future<List<Contrato>> listarContratosResumo() async {
+  /// Listar contratos resumo
+  Future<List<ContratoResumo>> listarContratosResumo() async {
     final url = Uri.parse('$_baseUrl/api/contrato');
-    final response = await http.get(url);
+    final response = await _client.get(url);
 
     if (response.statusCode == 200) {
       final List<dynamic> decoded = jsonDecode(response.body);
-      return decoded
-          .map((e) => Contrato.fromResumoJson(e as Map<String, dynamic>))
-          .toList();
+      return decoded.map((e) => ContratoResumo.fromJson(e)).toList();
     } else {
       throw Exception(
         'Falha ao listar contratos (status ${response.statusCode})',
@@ -27,14 +28,13 @@ class ContratoService {
     }
   }
 
-  /// 2) Busca contrato completo por ID → GET /api/contrato/{id}
-  Future<Contrato> buscarContratoPorId(int id) async {
+  /// Buscar contrato por ID
+  Future<ContratoDTO> buscarContratoPorId(int id) async {
     final url = Uri.parse('$_baseUrl/api/contrato/$id');
-    final response = await http.get(url);
+    final response = await _client.get(url);
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> json = jsonDecode(response.body);
-      return Contrato.fromJson(json);
+      return ContratoDTO.fromJson(jsonDecode(response.body));
     } else {
       throw Exception(
         'Falha ao buscar contrato (status ${response.statusCode})',
@@ -42,14 +42,13 @@ class ContratoService {
     }
   }
 
-  /// 3) Busca contrato por orçamento → GET /api/orcamento/{orcamentoId}/contrato
-  Future<Contrato> buscarContratoPorOrcamento(int orcamentoId) async {
+  /// Buscar contrato por orçamento
+  Future<ContratoDTO> buscarContratoPorOrcamento(int orcamentoId) async {
     final url = Uri.parse('$_baseUrl/api/orcamento/$orcamentoId/contrato');
-    final response = await http.get(url);
+    final response = await _client.get(url);
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> json = jsonDecode(response.body);
-      return Contrato.fromJson(json);
+      return ContratoDTO.fromJson(jsonDecode(response.body));
     } else {
       throw Exception(
         'Falha ao buscar contrato por orçamento (status ${response.statusCode})',
@@ -57,37 +56,35 @@ class ContratoService {
     }
   }
 
-  /// 4) Cria um novo contrato → POST /api/contrato
-  Future<Contrato> criarContrato(Contrato contrato) async {
+  /// Criar contrato
+  Future<ContratoDTO> criarContrato(ContratoDTO contrato) async {
     final url = Uri.parse('$_baseUrl/api/contrato');
-    final response = await http.post(
+    final response = await _client.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(contrato.toJson()),
     );
 
     if (response.statusCode == 201) {
-      final Map<String, dynamic> json = jsonDecode(response.body);
-      return Contrato.fromJson(json);
+      return ContratoDTO.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception(
-        'Falha ao criar contrato (status ${response.statusCode})',
-      );
+      final Map<String, dynamic> jsonError = jsonDecode(response.body);
+      final String? message = jsonError['message'];
+      throw Exception('Erro: $message (status ${response.statusCode})');
     }
   }
 
-  /// 5) Atualiza um contrato existente → PUT /api/contrato/{id}
-  Future<Contrato> atualizarContrato(int id, Contrato contrato) async {
+  /// Atualizar contrato
+  Future<ContratoDTO> atualizarContrato(int id, ContratoDTO contrato) async {
     final url = Uri.parse('$_baseUrl/api/contrato/$id');
-    final response = await http.put(
+    final response = await _client.put(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(contrato.toJson()),
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> json = jsonDecode(response.body);
-      return Contrato.fromJson(json);
+      return ContratoDTO.fromJson(jsonDecode(response.body));
     } else {
       throw Exception(
         'Falha ao atualizar contrato (status ${response.statusCode})',
@@ -95,19 +92,28 @@ class ContratoService {
     }
   }
 
-  /// 6) Baixa o PDF do contrato → GET /api/orcamento/{orcamentoId}/contrato (Accept: application/pdf)
-  Future<Uint8List> baixarContratoPdf(int orcamentoId) async {
-    final url = Uri.parse('$_baseUrl/api/orcamento/$orcamentoId/contrato');
-    final response = await http.get(
-      url,
-      headers: {'Accept': 'application/pdf'},
-    );
+static Future<Uint8List> gerarPdfContrato(int id) async {
+  final uri = Uri.parse('${AppConstants.baseUrl}/api/contrato/$id/pdf');
 
-    if (response.statusCode == 200) {
-      return response.bodyBytes;
+  final response = await http.get(uri);
+
+  if (response.statusCode == 200) {
+    return response.bodyBytes;
+  } else {
+    throw Exception('Erro ao gerar PDF. Código: ${response.statusCode}');
+  }
+}
+
+  /// Buscar contrato por ID
+  Future<void> deletarContrato(int id) async {
+    final url = Uri.parse('$_baseUrl/api/contrato/$id');
+    final response = await _client.delete(url);
+
+    if (response.statusCode == 204 || response.statusCode == 200) {
+      return;
     } else {
       throw Exception(
-        'Falha ao baixar contrato (status ${response.statusCode})',
+        'Erro ao excluir contrato ID $id. Código: ${response.statusCode}',
       );
     }
   }

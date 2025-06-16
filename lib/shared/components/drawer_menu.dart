@@ -21,12 +21,10 @@ class DrawerMenu extends StatelessWidget {
           ),
           _item(context, 'Home', '/home'),
           _item(context, 'Usuários', '/tela_listar_usuarios'),
-          _item(context, 'Ativar Conta', '/tela_ativacao_usuario'),
           _item(context, 'Orçamentos', '/tela_listar_orcamentos'),
           _item(context, 'Contratos', '/tela_listar_contratos'),
           _item(context, 'Obras', '/tela_listar_obras'),
-          _item(context, 'Agenda', '/tela_listar_agenda'),
-          _item(context, 'Kanban', '/tela_kanban_obras'),
+          _item(context, 'Visitas', '/tela_listar_visitas'),
         ],
       ),
     );

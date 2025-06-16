@@ -13,6 +13,9 @@ class InputCampo extends StatelessWidget {
   final FocusNode? focusNode;
   final bool enabled;
   final int? maxLinhas;
+  final void Function(bool)? onFocusChange;
+  final bool readOnly;
+  final Widget? suffixIcon;
 
   const InputCampo({
     super.key,
@@ -25,26 +28,34 @@ class InputCampo extends StatelessWidget {
     this.focusNode,
     this.enabled = true,
     this.maxLinhas,
+    this.onFocusChange,
+    this.readOnly = false,
+    this.suffixIcon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
+      child: Focus(
         focusNode: focusNode,
-        keyboardType: tipoTeclado,
-        enabled: enabled,
-        inputFormatters: mascaras,
-        validator: validador,
-        maxLines: maxLinhas,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icone),
-          filled: true,
-          fillColor: AppColors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        onFocusChange: onFocusChange,
+        child: TextFormField(
+          controller: controller,
+          keyboardType: tipoTeclado,
+          enabled: enabled,
+          readOnly: readOnly,
+          inputFormatters: mascaras,
+          validator: validador,
+          maxLines: maxLinhas,
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(icone),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: AppColors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
         ),
       ),
     );

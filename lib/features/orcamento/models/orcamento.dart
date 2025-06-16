@@ -85,6 +85,8 @@ class Orcamento {
   /// Data de criação, recebida como ISO 8601 pelo back.
   final DateTime dataCriacao;
 
+  final double totalOrcamento;
+
   Orcamento({
     required this.id,
     required this.clienteId,
@@ -96,6 +98,7 @@ class Orcamento {
     required this.comMaterial,
     required this.itens,
     required this.dataCriacao,
+    required this.totalOrcamento,
   });
 
   /// Constrói Orcamento a partir de um JSON (Map<String, dynamic>).
@@ -119,6 +122,7 @@ class Orcamento {
       tipo: json['tipo'] as String,
       subtipo: json['subtipo'] as String,
       comMaterial: json['comMaterial'] as bool,
+      totalOrcamento: json['valorTotal'] as double,
       itens: itensJson,
       dataCriacao: DateTime.parse(json['dataCriacao'] as String),
     );
@@ -170,6 +174,7 @@ class Orcamento {
                 },
               )
               .toList(),
+      'totalOrcamento': totalOrcamento,
     };
   }
 }

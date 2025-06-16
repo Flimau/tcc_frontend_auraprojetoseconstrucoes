@@ -1,19 +1,15 @@
 // lib/features/contrato/screens/tela_listar_contratos.dart
 
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:front_application/shared/services/contrato_service.dart'; // ContratoService
-import 'package:path_provider/path_provider.dart';
+import 'package:front_application/shared/services/contrato_service.dart';
 import 'package:provider/provider.dart';
 
-import '../../../shared/components/form_widgets.dart'; // AppBarCustom, BotaoPadrao, DropdownPadrao, DrawerMenu
-import '../../../theme/theme.dart'; // AppColors, AppTextStyles
-import '../controllers/contrato_list_controller.dart'; // ContratoListController
-import '../models/contrato.dart'; // Contrato
-import 'pdf_viewer_page.dart'; // PdfViewerPage
-import 'tela_cadastro_contrato.dart'; // TelaCadastroContrato
+import '../../../shared/components/form_widgets.dart';
+import '../../../shared/utils/pdf_utils.dart';
+import '../../../theme/theme.dart';
+import '../controllers/contrato_list_controller.dart';
+import '../models/contrato_resumo.dart';
+import 'tela_cadastro_contrato.dart';
 
 class TelaListarContratos extends StatelessWidget {
   const TelaListarContratos({super.key});
@@ -21,7 +17,7 @@ class TelaListarContratos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ContratoListController(),
+      create: (_) => ContratoListController()..buscarTodosContratos(),
       child: Consumer<ContratoListController>(
         builder: (context, controller, _) {
           return Scaffold(
@@ -31,53 +27,8 @@ class TelaListarContratos extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // === FILTRO: Dropdown + TextField ===
                   Row(
                     children: [
-                      Expanded(
-                        flex: 2,
-                        child: DropdownPadrao(
-                          label: 'Buscar por',
-                          itens: controller.chaves,
-                          valorSelecionado: controller.chaveSelecionada,
-                          onChanged: (value) {
-                            controller.atualizarChave(value!);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 3,
-                        child: TextFormField(
-                          controller: controller.valorBuscaController,
-                          decoration: InputDecoration(
-                            labelText:
-                                controller.chaveSelecionada == 'ID do orçamento'
-                                    ? 'ID do orçamento'
-                                    : 'Nome do cliente',
-                          ),
-                          keyboardType:
-                              controller.chaveSelecionada == 'ID do orçamento'
-                                  ? TextInputType.number
-                                  : TextInputType.text,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // === BOTÕES “Buscar” e “Cadastrar” ===
-                  Row(
-                    children: [
-                      Expanded(
-                        child: BotaoPadrao(
-                          texto: 'Buscar',
-                          onPressed: () {
-                            controller.buscar(context);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
                       Expanded(
                         child: BotaoPadrao(
                           texto: 'Cadastrar',
@@ -87,9 +38,7 @@ class TelaListarContratos extends StatelessWidget {
                               MaterialPageRoute(
                                 builder: (_) => const TelaCadastroContrato(),
                               ),
-                            ).then((_) {
-                              controller.buscar(context);
-                            });
+                            ).then((_) => controller.buscarTodosContratos());
                           },
                         ),
                       ),
@@ -98,7 +47,6 @@ class TelaListarContratos extends StatelessWidget {
                   const SizedBox(height: 24),
                   const Divider(),
 
-                  // === LISTA DE RESULTADOS ===
                   Expanded(
                     child:
                         controller.resultados.isEmpty
@@ -111,7 +59,7 @@ class TelaListarContratos extends StatelessWidget {
                             : ListView.builder(
                               itemCount: controller.resultados.length,
                               itemBuilder: (context, index) {
-                                final Contrato contrato =
+                                final ContratoResumo contrato =
                                     controller.resultados[index];
                                 return Card(
                                   shape: RoundedRectangleBorder(
@@ -123,31 +71,27 @@ class TelaListarContratos extends StatelessWidget {
                                   ),
                                   child: ListTile(
                                     title: Text(
-                                      'Contrato ID: ${contrato.id}  •  '
-                                      'Orçamento ID: ${contrato.orcamentoId}',
+                                      'Contrato ID: ${contrato.id}  •  Orçamento ID: ${contrato.orcamentoId}',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.text,
                                       ),
                                     ),
                                     subtitle: Text(
-                                      'Cliente: ${contrato.clienteNome} (ID ${contrato.clienteId})\n'
-                                      'Status: ${contrato.status}',
+                                      'Cliente: ${contrato.clienteNome} (ID ${contrato.clienteId})',
                                       style: const TextStyle(
                                         color: AppColors.subtitle,
                                       ),
                                     ),
-                                    isThreeLine: true,
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        // Ícone de edição
                                         IconButton(
                                           icon: const Icon(
                                             Icons.edit,
                                             size: 24,
+                                            color: AppColors.primary,
                                           ),
-                                          color: AppColors.primary,
                                           onPressed: () {
                                             Navigator.push(
                                               context,
@@ -158,41 +102,28 @@ class TelaListarContratos extends StatelessWidget {
                                                           contrato.orcamentoId,
                                                     ),
                                               ),
-                                            ).then((_) {
-                                              controller.buscar(context);
-                                            });
+                                            ).then(
+                                              (_) =>
+                                                  controller
+                                                      .buscarTodosContratos(),
+                                            );
                                           },
                                         ),
-                                        const SizedBox(width: 8),
-                                        // Ícone de PDF
                                         IconButton(
                                           icon: const Icon(
                                             Icons.picture_as_pdf,
                                             size: 24,
+                                            color: AppColors.accent,
                                           ),
-                                          color: AppColors.accent,
                                           onPressed: () async {
                                             try {
-                                              Uint8List bytes =
-                                                  await ContratoService()
-                                                      .baixarContratoPdf(
-                                                        contrato.orcamentoId,
-                                                      );
-                                              Directory tempDir =
-                                                  await getTemporaryDirectory();
-                                              String filePath =
-                                                  '${tempDir.path}/contrato_${contrato.orcamentoId}.pdf';
-                                              File(
-                                                filePath,
-                                              ).writeAsBytesSync(bytes);
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder:
-                                                      (_) => PdfViewerPage(
-                                                        filePath: filePath,
-                                                      ),
-                                                ),
+                                              final bytes =
+                                                  await ContratoService.gerarPdfContrato(
+                                                    contrato.id,
+                                                  );
+                                              await PdfUtils.abrirOuSalvarPdf(
+                                                bytes,
+                                                'contrato_${contrato.id}.pdf',
                                               );
                                             } catch (e) {
                                               ScaffoldMessenger.of(
@@ -200,10 +131,60 @@ class TelaListarContratos extends StatelessWidget {
                                               ).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
-                                                    'Erro ao abrir PDF: ${e.toString()}',
+                                                    'Erro ao gerar PDF: $e',
                                                   ),
                                                 ),
                                               );
+                                            }
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete_forever,
+                                            size: 24,
+                                            color: Colors.red,
+                                          ),
+                                          onPressed: () async {
+                                            final confirmar = await showDialog<
+                                              bool
+                                            >(
+                                              context: context,
+                                              builder:
+                                                  (ctx) => AlertDialog(
+                                                    title: const Text(
+                                                      "Confirmação",
+                                                    ),
+                                                    content: const Text(
+                                                      "Deseja realmente excluir o contrato?",
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed:
+                                                            () => Navigator.pop(
+                                                              ctx,
+                                                              false,
+                                                            ),
+                                                        child: const Text(
+                                                          "Cancelar",
+                                                        ),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed:
+                                                            () => Navigator.pop(
+                                                              ctx,
+                                                              true,
+                                                            ),
+                                                        child: const Text(
+                                                          "Excluir",
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                            );
+                                            if (confirmar == true) {
+                                              await ContratoService()
+                                                  .deletarContrato(contrato.id);
+                                              controller.buscarTodosContratos();
                                             }
                                           },
                                         ),

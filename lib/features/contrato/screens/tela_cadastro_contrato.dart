@@ -3,13 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../shared/components/form_widgets.dart'; // AppBarCustom, BotaoPadrao, DrawerMenu
-import '../../../theme/theme.dart'; // AppColors, AppTextStyles
-import '../controllers/contrato_cadastro_controller.dart'; // ContratoCadastroController
-import '../widgets/formulario_contrato.dart'; // FormularioContrato
+import '../../../shared/components/form_widgets.dart';
+import '../../../theme/theme.dart';
+import '../controllers/contrato_cadastro_controller.dart';
+import '../widgets/formulario_contrato.dart';
 
 class TelaCadastroContrato extends StatefulWidget {
-  /// Se quiser editar um contrato existente, passe orcamentoId.
   final int? orcamentoId;
 
   const TelaCadastroContrato({super.key, this.orcamentoId});
@@ -19,23 +18,23 @@ class TelaCadastroContrato extends StatefulWidget {
 }
 
 class _TelaCadastroContratoState extends State<TelaCadastroContrato> {
+  late final ContratoCadastroController controller;
+
   @override
   void initState() {
     super.initState();
-    // Se veio orcamentoId, carregamos dados existentes
-    if (widget.orcamentoId != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<ContratoCadastroController>().carregarContratoExistente(
-          widget.orcamentoId!,
-        );
-      });
-    }
+    controller = ContratoCadastroController();
+    controller.carregarOrcamentos().then((_) {
+      if (widget.orcamentoId != null) {
+        controller.carregarContratoPorOrcamento(widget.orcamentoId!);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ContratoCadastroController(),
+    return ChangeNotifierProvider.value(
+      value: controller,
       child: Consumer<ContratoCadastroController>(
         builder: (context, controller, _) {
           return Scaffold(

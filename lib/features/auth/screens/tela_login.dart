@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:front_application/theme/theme.dart';
 
@@ -67,33 +66,14 @@ class TelaLogin extends StatelessWidget {
 
               // BOTÃO LOGIN
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/home');
+                },
                 child: const Text('Entrar', style: AppTextStyles.fontButton),
               ),
 
               // TEXTO DE CADASTRO
               const SizedBox(height: 24),
-
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Não tem uma conta? ',
-                      style: AppTextStyles.body,
-                    ),
-                    TextSpan(
-                      text: 'Cadastre-se aqui!',
-                      style: AppTextStyles.link,
-                      recognizer:
-                          TapGestureRecognizer()
-                            ..onTap = () {
-                              Navigator.pushNamed(context, '/cadastro');
-                            },
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
           //),

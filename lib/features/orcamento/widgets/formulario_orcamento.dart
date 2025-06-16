@@ -41,6 +41,7 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
           sum + (item.subtotal ?? (item.quantidade * item.valorUnitario)),
     );
 
+    controller.totalOrcamento = totalOrcamento;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

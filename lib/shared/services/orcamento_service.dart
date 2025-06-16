@@ -136,4 +136,18 @@ class OrcamentoService {
       throw Exception('Erro ao gerar PDF. Código: ${response.statusCode}');
     }
   }
+
+  Future<List<Orcamento>> listarOrcamentos() async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/orcamento');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> decoded = jsonDecode(response.body);
+      return decoded.map((e) => Orcamento.fromJson(e)).toList();
+    } else {
+      throw Exception(
+        'Falha ao listar orçamentos (status ${response.statusCode})',
+      );
+    }
+  }
 }

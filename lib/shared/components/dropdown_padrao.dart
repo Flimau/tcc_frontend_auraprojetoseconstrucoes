@@ -6,7 +6,8 @@ class DropdownPadrao extends StatelessWidget {
   final String label;
   final List<String> itens;
   final String? valorSelecionado;
-  final Function(String?) onChanged;
+  final Function(String?)? onChanged;
+  final bool somenteLeitura; // 👈 Adicionamos esse novo parâmetro
 
   const DropdownPadrao({
     super.key,
@@ -14,6 +15,7 @@ class DropdownPadrao extends StatelessWidget {
     required this.itens,
     required this.valorSelecionado,
     required this.onChanged,
+    this.somenteLeitura = false,
   });
 
   @override
@@ -31,8 +33,12 @@ class DropdownPadrao extends StatelessWidget {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: valorSelecionado,
+              value:
+                  (valorSelecionado != null && itens.contains(valorSelecionado))
+                      ? valorSelecionado
+                      : null,
               isExpanded: true,
+              hint: const Text("Selecione..."),
               items:
                   itens
                       .map(
@@ -40,7 +46,7 @@ class DropdownPadrao extends StatelessWidget {
                             DropdownMenuItem(value: item, child: Text(item)),
                       )
                       .toList(),
-              onChanged: onChanged,
+              onChanged: somenteLeitura ? (_) {} : onChanged,
             ),
           ),
         ),

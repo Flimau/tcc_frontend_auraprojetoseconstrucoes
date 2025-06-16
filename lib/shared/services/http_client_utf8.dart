@@ -1,35 +1,29 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-//lib ofc flutter pra armazenar dados simples localmente
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Wrapper de http.Client que força decode UTF-8 e adiciona token automaticamente
 class HttpClientUtf8 extends http.BaseClient {
   final http.Client _inner = http.Client();
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    // Busca token salvo
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
-    // Aplica token se existir
     if (token != null && token.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer $token';
     }
 
-    // Garante content-type também (evita repetir em cada chamada)
     request.headers.putIfAbsent('Content-Type', () => 'application/json');
 
     return _inner.send(request);
   }
 
-  /// Reimplementa todos os métodos para garantir UTF-8 no corpo
   @override
   Future<http.Response> get(Uri url, {Map<String, String>? headers}) async {
     final response = await _inner.get(url, headers: headers);
-    return _withUtf8Body(response);
+    return _processResponse(response);
   }
 
   @override
@@ -45,7 +39,7 @@ class HttpClientUtf8 extends http.BaseClient {
       body: body,
       encoding: encoding,
     );
-    return _withUtf8Body(response);
+    return _processResponse(response);
   }
 
   @override
@@ -61,7 +55,7 @@ class HttpClientUtf8 extends http.BaseClient {
       body: body,
       encoding: encoding,
     );
-    return _withUtf8Body(response);
+    return _processResponse(response);
   }
 
   @override
@@ -77,19 +71,27 @@ class HttpClientUtf8 extends http.BaseClient {
       body: body,
       encoding: encoding,
     );
-    return _withUtf8Body(response);
+    return _processResponse(response);
   }
 
-  http.Response _withUtf8Body(http.Response response) {
-    final decoded = utf8.decode(response.bodyBytes);
-    return http.Response(
-      decoded,
-      response.statusCode,
-      headers: response.headers,
-      request: response.request,
-      isRedirect: response.isRedirect,
-      persistentConnection: response.persistentConnection,
-      reasonPhrase: response.reasonPhrase,
-    );
+  http.Response _processResponse(http.Response response) {
+    final contentType = response.headers['content-type'] ?? '';
+
+    if (contentType.contains('application/json') ||
+        contentType.contains('text')) {
+      final decoded = utf8.decode(response.bodyBytes);
+      return http.Response(
+        decoded,
+        response.statusCode,
+        headers: response.headers,
+        request: response.request,
+        isRedirect: response.isRedirect,
+        persistentConnection: response.persistentConnection,
+        reasonPhrase: response.reasonPhrase,
+      );
+    }
+
+    // qualquer outra coisa (binário), retorna como veio
+    return response;
   }
 }

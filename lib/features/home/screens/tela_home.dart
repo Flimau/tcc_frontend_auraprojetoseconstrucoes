@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/components/form_widgets.dart';
 import '../../../theme/theme.dart';
-import '../../contrato/screens/tela_listar_contratos.dart';
-import '../../obra/screens/tela_listar_obras.dart';
-import '../../orcamento/screens/tela_listar_orcamentos.dart';
-import '../../usuario/screens/tela_listar_usuarios.dart';
-import '../../visita/screens/tela_listar_visitas.dart';
 
 class TelaHome extends StatelessWidget {
   const TelaHome({super.key});
@@ -29,35 +24,42 @@ class TelaHome extends StatelessWidget {
               Icons.person,
               'Usuários',
               AppColors.primary,
-              const TelaListarUsuarios(),
+              '/tela_listar_usuarios',
             ),
             _cardDash(
               context,
               Icons.assignment,
               'Orçamentos',
               AppColors.accent,
-              const TelaListarOrcamentos(),
+              '/tela_listar_orcamentos',
             ),
             _cardDash(
               context,
               Icons.home_work,
               'Obras',
               AppColors.primary.withOpacity(0.7),
-              const TelaListarObras(),
+              '/tela_listar_obras',
             ),
             _cardDash(
               context,
               Icons.description,
               'Contratos',
               AppColors.accent,
-              const TelaListarContratos(),
+              '/tela_listar_contratos',
             ),
             _cardDash(
               context,
               Icons.map_outlined,
               'Visitas',
               AppColors.primary.withOpacity(0.6),
-              const TelaListarVisitas(),
+              '/tela_listar_visitas',
+            ),
+            _cardDash(
+              context,
+              Icons.home_work,
+              'Obras',
+              AppColors.primary.withOpacity(0.6),
+              '/tela_listar_obras',
             ),
           ],
         ),
@@ -70,11 +72,11 @@ class TelaHome extends StatelessWidget {
     IconData icone,
     String titulo,
     Color corIcone,
-    Widget destino,
+    String rotaDestino,
   ) {
     return InkWell(
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => destino));
+        Navigator.pushNamed(context, rotaDestino);
       },
       child: Container(
         decoration: AppTheme.cardBox,
