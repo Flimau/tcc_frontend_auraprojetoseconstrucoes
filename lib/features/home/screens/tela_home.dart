@@ -54,13 +54,6 @@ class TelaHome extends StatelessWidget {
               AppColors.primary.withOpacity(0.6),
               '/tela_listar_visitas',
             ),
-            _cardDash(
-              context,
-              Icons.home_work,
-              'Obras',
-              AppColors.primary.withOpacity(0.6),
-              '/tela_listar_obras',
-            ),
           ],
         ),
       ),
