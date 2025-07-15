@@ -1,7 +1,3 @@
-// ============================
-// lib/features/visita/controllers/visita_list_controller.dart
-// ============================
-
 import 'package:flutter/material.dart';
 
 import '../../../shared/services/visita_service.dart';
@@ -12,7 +8,6 @@ class VisitaListController extends ChangeNotifier {
   bool carregando = false;
   String? erro;
 
-  // Campos de busca / filtro
   String chaveSelecionada = 'DataVisita';
   final List<String> chaves = ['ID', 'Cliente', 'DataVisita'];
 
@@ -46,13 +41,11 @@ class VisitaListController extends ChangeNotifier {
     }
   }
 
-  /// Busca de acordo com o filtro selecionado
   Future<void> buscar(BuildContext context) async {
     final valor = valorBuscaController.text.trim();
     final dataInicioText = dataInicioController.text.trim();
     final dataFimText = dataFimController.text.trim();
 
-    // Filtro por DataVisita (período)
     if (chaveSelecionada == 'DataVisita') {
       if (dataInicioText.isEmpty || dataFimText.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -100,7 +93,6 @@ class VisitaListController extends ChangeNotifier {
       return;
     }
 
-    // Filtro por ID
     if (chaveSelecionada == 'ID') {
       final idNum = int.tryParse(valor);
       if (idNum == null) {
@@ -127,7 +119,6 @@ class VisitaListController extends ChangeNotifier {
       return;
     }
 
-    // Filtro por Cliente (nome)
     if (chaveSelecionada == 'Cliente') {
       carregando = true;
       erro = null;
@@ -152,7 +143,6 @@ class VisitaListController extends ChangeNotifier {
       return;
     }
 
-    // Se o campo de texto estiver vazio, recarrega todas
     if (valor.isEmpty) {
       await buscarTodasVisitas();
       return;
@@ -179,7 +169,6 @@ class VisitaListController extends ChangeNotifier {
     return '$ano-$mes-$dia';
   }
 
-  /// Exclui uma visita e recarrega a lista
   Future<void> deleteVisita(
     BuildContext context,
     String visitaId,
@@ -190,7 +179,6 @@ class VisitaListController extends ChangeNotifier {
     try {
       await VisitaService.deleteVisita(visitaId);
       mostrarMensagem(context, 'Visita excluída com sucesso!');
-      //aguarda o rebuild terminar antes de carregar as visitas
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await buscarTodasVisitas();
       });

@@ -7,8 +7,7 @@ class DropdownPadrao extends StatelessWidget {
   final List<String> itens;
   final String? valorSelecionado;
   final Function(String?)? onChanged;
-  final bool somenteLeitura; // 👈 Adicionamos esse novo parâmetro
-
+  final bool somenteLeitura;
   const DropdownPadrao({
     super.key,
     required this.label,

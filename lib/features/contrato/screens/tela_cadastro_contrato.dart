@@ -1,5 +1,3 @@
-// lib/features/contrato/screens/tela_cadastro_contrato.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

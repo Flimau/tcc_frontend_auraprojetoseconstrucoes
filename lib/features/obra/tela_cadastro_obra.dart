@@ -167,12 +167,10 @@ class _TelaCadastroObraState extends State<TelaCadastroObra> {
       if (resp.statusCode == 200) {
         final data = json.decode(resp.body);
 
-        // Primeiro carrega as listas antes de setar os selecionados:
         await carregarClientes();
         await carregarExecutores();
         await carregarOrcamentosDoCliente();
 
-        /// CLIENTE (proteção para garantir que o ID existe na lista):
         final clienteId = data['clienteId'];
         final cliente = clientes.firstWhere(
           (c) => c['id'] == clienteId,
@@ -184,7 +182,6 @@ class _TelaCadastroObraState extends State<TelaCadastroObra> {
           clienteSelecionado = null;
         }
 
-        /// EXECUTOR:
         final executorId = data['executorId'];
         if (executorId != null) {
           final executor = executores.firstWhere(
@@ -198,7 +195,6 @@ class _TelaCadastroObraState extends State<TelaCadastroObra> {
           executorSelecionado = null;
         }
 
-        /// DATAS:
         dataInicioController.text =
             data['dataInicio'] != null
                 ? _converterDataParaPTBR(data['dataInicio'])
@@ -210,7 +206,6 @@ class _TelaCadastroObraState extends State<TelaCadastroObra> {
 
         status = data['status'] ?? "PLANEJADA";
 
-        /// ORCAMENTO:
         if (data['orcamentoId'] != null && data['orcamentoData'] != null) {
           orcamentoSelecionado = 'ID: ${data['orcamentoId']} - ${data['tipo']}';
         } else {
@@ -338,7 +333,7 @@ class _TelaCadastroObraState extends State<TelaCadastroObra> {
           mensagemErro = data['message'];
         }
       } catch (_) {
-        // Se der erro no jsonDecode, mantém o erro genérico
+        // Se der erro no jsonDecode mantém o erro genérico
       }
 
       ScaffoldMessenger.of(
@@ -402,7 +397,7 @@ class _TelaCadastroObraState extends State<TelaCadastroObra> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFBFA33F), // dourado Aura
+              color: Color(0xFFBFA33F),
             ),
           ),
           const SizedBox(height: 16),
@@ -547,7 +542,7 @@ class _TelaCadastroObraState extends State<TelaCadastroObra> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFBFA33F), // dourado Aura
+              color: Color(0xFFBFA33F), 
             ),
           ),
           const SizedBox(height: 16),

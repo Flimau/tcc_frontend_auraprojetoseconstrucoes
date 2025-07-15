@@ -21,7 +21,6 @@ class FormularioVisita extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // === Seção: Informações da Visita ===
         CardContainer(
           margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.all(16),
@@ -50,7 +49,6 @@ class FormularioVisita extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // === Seção: Endereço ===
         CardContainer(
           margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.all(16),
@@ -110,7 +108,6 @@ class FormularioVisita extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // === Seção: Mídias da Visita ===
         CardContainer(
           margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.all(16),
@@ -120,7 +117,6 @@ class FormularioVisita extends StatelessWidget {
               Text('Mídias da Visita', style: AppTextStyles.headline),
               const SizedBox(height: 12),
 
-              // === FOTOS DO SERVIDOR
               Wrap(
                 spacing: 8,
                 runSpacing: 8,

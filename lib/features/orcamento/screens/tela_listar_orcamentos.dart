@@ -1,5 +1,3 @@
-// lib/features/orcamento/screens/tela_listar_orcamentos.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,7 +26,6 @@ class TelaListarOrcamentos extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Botões de ação
                   Row(
                     children: [
                       Expanded(
@@ -113,7 +110,6 @@ class TelaListarOrcamentos extends StatelessWidget {
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    // Editar
                                     IconButton(
                                       icon: Icon(
                                         Icons.edit,
@@ -133,7 +129,6 @@ class TelaListarOrcamentos extends StatelessWidget {
                                         );
                                       },
                                     ),
-                                    // Gerar PDF
                                     IconButton(
                                       icon: const Icon(
                                         Icons.picture_as_pdf,
@@ -163,7 +158,6 @@ class TelaListarOrcamentos extends StatelessWidget {
                                         }
                                       },
                                     ),
-                                    // Excluir
                                     IconButton(
                                       icon: Icon(
                                         Icons.delete,

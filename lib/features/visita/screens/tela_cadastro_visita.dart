@@ -1,12 +1,10 @@
-// lib/features/visita/screens/tela_cadastro_visita.dart
-
 import 'package:flutter/material.dart';
 import 'package:front_application/features/usuario/models/usuario.dart';
 import 'package:front_application/theme/colors.dart';
 import 'package:front_application/theme/text_styles.dart';
 import 'package:provider/provider.dart';
 
-import '../../../shared/components/form_widgets.dart'; // BotaoPadrao, BotaoVoltar, DropdownPadrao
+import '../../../shared/components/form_widgets.dart'; 
 import '../controllers/visita_cadastro_controller.dart';
 import '../widgets/formulario_visita.dart';
 
@@ -24,7 +22,6 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
   @override
   void initState() {
     super.initState();
-    // Começamos em modo “criar nova visita” (visitaId = null)
     _controller = VisitaCadastroController(visitaId: null);
   }
 
@@ -34,7 +31,6 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
     if (!_isInit) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is String) {
-        // Se chegou um ID por argumento, significa modo “editar”
         _controller.dispose();
         _controller = VisitaCadastroController(visitaId: args);
       }
@@ -55,7 +51,6 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
       child: Consumer<VisitaCadastroController>(
         builder: (ctx, ctrl, _) {
           ctrl.setContextParaBusca(ctx, _mostrarMensagem);
-          // Se em edição, carregue dados apenas uma vez
           if (ctrl.visitaId != null &&
               ctrl.sucesso == null &&
               ctrl.erro == null) {
@@ -66,12 +61,9 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
               ctrl.carregarVisitaParaEdicao();
             }
           }
-
-          // Montagem do texto “ID - Nome” para exibir em modo edição
           String textoClienteInformativo = '';
           if (ctrl.visitaId != null &&
               ctrl.clienteIdController.text.isNotEmpty) {
-            // Tentamos encontrar o nome do cliente na lista (caso já tenha sido carregada)
             final encontrado = ctrl.clientes.firstWhere(
               (u) => u.id == ctrl.clienteIdController.text,
               orElse:
@@ -99,7 +91,6 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // === Botão “Voltar” alinhado à esquerda ===
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: BotaoVoltar(),
@@ -107,7 +98,6 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
 
                   const SizedBox(height: 16),
 
-                  // === Campo “Cliente” ===
                   if (ctrl.carregandoClientes)
                     const Center(child: CircularProgressIndicator())
                   else if (ctrl.erroClientes != null)
@@ -122,7 +112,7 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
                       ),
                     )
                   else if (ctrl.visitaId == null)
-                    // MODO “CRIAÇÃO”: dropdown para escolher cliente
+                    
                     DropdownPadrao(
                       label: 'Cliente (ID - Nome)',
                       itens:
@@ -143,7 +133,7 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
                       },
                     )
                   else
-                    // MODO “EDIÇÃO”: exibe campo não editável apenas com texto
+                    
                     CardContainer(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -168,12 +158,12 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
 
                   const SizedBox(height: 16),
 
-                  // === Resto do formulário (Informações, Endereço, Mídias) ===
+                  
                   const FormularioVisita(),
 
                   const SizedBox(height: 24),
 
-                  // === Botão Salvar / Atualizar ===
+                  
                   if (ctrl.carregando)
                     const Center(child: CircularProgressIndicator())
                   else
@@ -183,7 +173,7 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
                               ? 'Salvar Visita'
                               : 'Atualizar Visita',
                       onPressed: () {
-                        // Se estiver criando, valide que o dropdown de cliente não está vazio
+                        
                         if (ctrl.visitaId == null &&
                             ctrl.clienteIdController.text.trim().isEmpty) {
                           _mostrarMensagem(
@@ -193,8 +183,7 @@ class _TelaCadastroVisitaState extends State<TelaCadastroVisita> {
                           );
                           return;
                         }
-                        // Para edição, como o cliente já está bloqueado, não há necessidade
-                        // de verificar aqui; apenas enviamos o ID que está em clienteIdController.
+                        
                         ctrl.salvarVisita(context, _mostrarMensagem);
                       },
                     ),

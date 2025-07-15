@@ -9,17 +9,14 @@ class TelaLogin extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 36.0),
-          //child: CardContainer(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
 
-              // LOGO
               Image.asset('assets/images/logo_aura_removebg.png', width: 180),
 
               const SizedBox(height: 20),
-              // TÍTULOS
               Text('AURA CONSTRUÇÕES', style: AppTextStyles.headline),
               Text(
                 'PROJETOS | CONSTRUÇÕES | ACABAMENTOS',
@@ -33,7 +30,6 @@ class TelaLogin extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              // CAMPO EMAIL
               TextField(
                 decoration: InputDecoration(
                   labelText: 'E-mail',
@@ -44,7 +40,6 @@ class TelaLogin extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // CAMPO SENHA
               TextField(
                 obscureText: true,
                 decoration: InputDecoration(
@@ -56,7 +51,6 @@ class TelaLogin extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              // TEXTO "Esqueceu a senha?"
               Align(
                 alignment: Alignment.centerRight,
                 child: Text('Esqueceu a senha?', style: AppTextStyles.link),
@@ -72,11 +66,9 @@ class TelaLogin extends StatelessWidget {
                 child: const Text('Entrar', style: AppTextStyles.fontButton),
               ),
 
-              // TEXTO DE CADASTRO
               const SizedBox(height: 24),
             ],
           ),
-          //),
         ),
       ),
     );

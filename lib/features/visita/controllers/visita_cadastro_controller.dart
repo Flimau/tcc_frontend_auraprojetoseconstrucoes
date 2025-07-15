@@ -13,12 +13,10 @@ import '../models/visita.dart';
 class VisitaCadastroController extends ChangeNotifier {
   String? visitaId;
 
-  // --- Controllers do formulário ---
   final clienteIdController = TextEditingController();
-  final dataVisitaController = TextEditingController(); // “DD/MM/AAAA”
+  final dataVisitaController = TextEditingController();
   final descricaoController = TextEditingController();
 
-  // --- Endereço ---
   final cepController = TextEditingController();
   final ruaController = TextEditingController();
   final numeroController = TextEditingController();
@@ -28,22 +26,19 @@ class VisitaCadastroController extends ChangeNotifier {
   final estadoController = TextEditingController();
   final cepFocus = FocusNode();
 
-  // --- Imagens ---
-  final List<File> imagensSelecionadas = []; // Novas (locais)
-  final List<String> imagensServidor = [];   // Já salvas no back
+  final List<File> imagensSelecionadas = [];
+  final List<String> imagensServidor = [];
 
-  // --- Clientes dropdown ---
+
   List<Usuario> clientes = [];
   bool carregandoClientes = false;
   String? erroClientes;
 
-  // --- Estado geral ---
   bool carregando = false;
   String? erro;
   String? sucesso;
   bool _isDisposed = false;
 
-  // --- Contexto e callback para snackbar ---
   BuildContext? _dummyContext;
   void Function(BuildContext, String, {bool erro}) _dummyMostrarMensagem =
       (c, t, {erro = false}) {};

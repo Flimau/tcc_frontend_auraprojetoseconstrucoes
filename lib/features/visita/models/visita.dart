@@ -1,16 +1,3 @@
-// lib/features/visita/models/visita.dart
-
-/// Representa o objeto “Endereço” conforme o DTO usado pelo back-end.
-/// Esse endereço corresponde ao EnderecoDTO no servidor, com campos:
-///   - cep
-///   - logradouro
-///   - numero
-///   - complemento
-///   - bairro
-///   - cidade
-///   - siglaEstado
-///   - latitude (opcional)
-///   - longitude (opcional)
 class EnderecoDTO {
   final String cep;
   final String logradouro;
@@ -69,27 +56,15 @@ class EnderecoDTO {
   }
 }
 
-/// Modelo que representa exatamente a VisitaTécnica conforme o DTO
-/// VisitaTecnicaDTO retornado pelo back-end.
-/// Contém:
-///   - id                  : Long (armazenado como String aqui)
-///   - clienteId           : Long
-///   - clienteNome         : String
-///   - endereco            : EnderecoDTO
-///   - descricao           : String
-///   - dataVisita          : String (ISO “yyyy-MM-dd”)
-///   - fotos               : List<String>
-///   - videos              : List<String>
-///   - usadaEmOrcamento    : bool
 class Visita {
   final String id;
   final int clienteId;
   final String clienteNome;
   final EnderecoDTO endereco;
   final String descricao;
-  final String dataVisita; // ISO “yyyy-MM-dd”
-  final List<String> fotos; // Lista de URLs ou paths de fotos
-  final List<String> videos; // Lista de URLs ou paths de vídeos
+  final String dataVisita;
+  final List<String> fotos;
+  final List<String> videos;
   final bool usadaEmOrcamento;
 
   Visita({
@@ -122,16 +97,6 @@ class Visita {
     );
   }
 
-  /// Monta o JSON para envio na criação/atualização:
-  /// - O back-end espera um VisitaTecnicaCadastroDTO, que define:
-  ///     clienteId   : Long
-  ///     endereco    : EnderecoDTO
-  ///     descricao   : String
-  ///     dataVisita  : String (ISO)
-  ///     fotos       : List<String>
-  ///     videos      : List<String>
-  ///
-  /// Obtenha o Map a ser convertido em JSON chamando este método.
   Map<String, dynamic> toCadastroJson() {
     return {
       'clienteId': clienteId,

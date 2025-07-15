@@ -1,5 +1,3 @@
-// lib/features/visita/screens/tela_listar_visitas.dart
-
 import 'package:flutter/material.dart';
 import 'package:front_application/shared/utils/converters.dart';
 import 'package:provider/provider.dart';
@@ -28,7 +26,6 @@ class TelaListarVisitas extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // ===== Filtros =====
                   Row(
                     children: [
                       Expanded(
@@ -43,7 +40,6 @@ class TelaListarVisitas extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
 
-                      // Se "DataVisita" selecionado, exibimos intervalo de datas
                       if (controller.chaveSelecionada == 'DataVisita') ...[
                         Expanded(
                           child: InputCampo(
@@ -104,7 +100,6 @@ class TelaListarVisitas extends StatelessWidget {
                   const SizedBox(height: 24),
                   const Divider(color: AppColors.subtitle),
 
-                  // ===== Lista de resultados =====
                   Expanded(
                     child:
                         controller.carregando

@@ -21,7 +21,6 @@ class UsuarioCadastroController extends ChangeNotifier {
   String? idUsuario;
   bool? ativo;
 
-  // Controladores de campo
   final nomeController = TextEditingController();
   final emailController = TextEditingController();
   final telefoneController = TextEditingController();
@@ -184,8 +183,6 @@ class UsuarioCadastroController extends ChangeNotifier {
     }
   }
 
-  /// Altera status do usuário: desativa ou reativa.
-  /// Reativar CLIENTE retorna token no dialog; ADM/EXECUTOR só SnackBar.
   Future<void> alterarStatusUsuario(bool ativar, BuildContext context) async {
     if (!usuarioCarregado || idUsuario == null) return;
 
@@ -198,7 +195,6 @@ class UsuarioCadastroController extends ChangeNotifier {
       final response = await http.put(url);
 
       if (response.statusCode == 204) {
-        // Desativação ou reativação sem token
         ativo = ativar;
         notifyListeners();
         mostrarMensagemInterna?.call(
@@ -206,7 +202,6 @@ class UsuarioCadastroController extends ChangeNotifier {
           'Usuário ${ativar ? "reativado" : "inativado"} com sucesso!',
         );
       } else if (response.statusCode == 200) {
-        // Reativação de CLIENTE retorna token
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         final token = body['token'] as String?;
 

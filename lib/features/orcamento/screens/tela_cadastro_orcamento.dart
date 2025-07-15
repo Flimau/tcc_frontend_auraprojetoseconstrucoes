@@ -1,10 +1,8 @@
-// lib/features/orcamento/screens/tela_cadastro_orcamento.dart
-
 import 'package:flutter/material.dart';
 import 'package:front_application/shared/services/orcamento_service.dart';
 import 'package:provider/provider.dart';
 
-import '../../../shared/components/form_widgets.dart'; // AppBarCustom, DrawerMenu, BotaoPadrao, BotaoVoltar
+import '../../../shared/components/form_widgets.dart';
 import '../../../shared/utils/pdf_utils.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/text_styles.dart';
@@ -27,7 +25,6 @@ class _TelaCadastroOrcamentoState extends State<TelaCadastroOrcamento> {
   @override
   void initState() {
     super.initState();
-    // Inicialmente, cria o controller sem ID (modo criação)
     _controller = OrcamentoCadastroController();
   }
 
@@ -37,7 +34,6 @@ class _TelaCadastroOrcamentoState extends State<TelaCadastroOrcamento> {
     if (!_isInit) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is String) {
-        // Se veio um ID, refaz o controller em modo edição
         final id = int.tryParse(args);
         _controller.dispose();
         _controller = OrcamentoCadastroController(orcamentoId: id);
@@ -93,19 +89,16 @@ class _TelaCadastroOrcamentoState extends State<TelaCadastroOrcamento> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Botão “Voltar”
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: BotaoVoltar(),
                   ),
                   const SizedBox(height: 16),
 
-                  // Formulário de Orçamento
                   const FormularioOrcamento(),
 
                   const SizedBox(height: 24),
 
-                  // Botão Salvar / Atualizar
                   if (controller.carregando)
                     const Center(child: CircularProgressIndicator())
                   else

@@ -1,8 +1,5 @@
-// lib/features/orcamento/widgets/formulario_orcamento.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../../shared/components/form_widgets.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/text_styles.dart';
@@ -45,7 +42,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // === Dados Gerais ===
         CardContainer(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -55,7 +51,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
                 const TituloSecao('Informações Gerais'),
                 const SizedBox(height: 12),
 
-                // Cliente
                 if (controller.carregandoClientes)
                   const Center(child: CircularProgressIndicator())
                 else if (controller.erroClientes != null)
@@ -86,7 +81,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Visita
                 if (controller.carregandoVisitas)
                   const Center(child: CircularProgressIndicator())
                 else if (controller.erroVisitas != null)
@@ -120,7 +114,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Data
                 Row(
                   children: [
                     const Icon(Icons.calendar_today, color: AppColors.primary),
@@ -153,7 +146,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Descrição
                 InputCampoMultiline(
                   label: 'Descrição',
                   icone: Icons.description,
@@ -162,7 +154,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Tipo
                 DropdownPadrao(
                   label: 'Tipo de Orçamento',
                   itens: controller.tipos,
@@ -176,7 +167,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Subtipo
                 if (controller.tipoSelecionado != null)
                   DropdownPadrao(
                     label: 'Subtipo de Orçamento',
@@ -193,7 +183,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
 
                 const SizedBox(height: 16),
 
-                // Checkbox Com Material
                 Row(
                   children: [
                     Checkbox(
@@ -215,7 +204,6 @@ class _FormularioOrcamentoState extends State<FormularioOrcamento> {
           ),
         ),
 
-        // === Seção de Itens ===
         if (controller.comMaterial) ...[
           const SizedBox(height: 24),
           CardContainer(

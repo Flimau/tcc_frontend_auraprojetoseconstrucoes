@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:front_application/theme/theme.dart';
 
-/// Campo de texto multilinha unificado ao tema Aura
 class InputCampoMultiline extends StatelessWidget {
   final String label;
   final IconData icone;
@@ -20,11 +19,11 @@ class InputCampoMultiline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usa o InputDecorationTheme definido em AppTheme
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label usando o estilo de texto de subtítulo
+        
         Text(
           label,
           style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
@@ -37,7 +36,7 @@ class InputCampoMultiline extends StatelessWidget {
           style: AppTextStyles.body,
           decoration: InputDecoration(
             prefixIcon: Icon(icone, color: AppColors.accent),
-            // O restante da decoração (border, labelStyle, etc.) vem de InputDecorationTheme
+            
             hintStyle: AppTextStyles.subtitle,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 12,

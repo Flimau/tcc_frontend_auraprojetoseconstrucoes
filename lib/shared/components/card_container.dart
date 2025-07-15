@@ -19,7 +19,7 @@ class CardContainer extends StatelessWidget {
     return Container(
       padding: padding,
       margin: margin,
-      decoration: AppTheme.cardBox, // usa o estilo do theme.dart
+      decoration: AppTheme.cardBox,
       child: child,
     );
   }

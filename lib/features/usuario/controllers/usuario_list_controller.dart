@@ -18,7 +18,6 @@ class UsuarioListController extends ChangeNotifier {
 
   List<Usuario> resultados = [];
 
-  /// Agora retorna Future<void> para permitir o `await` e capturar erros
   Future<void> buscar() async {
     final filtro = campoBuscaController.text.trim();
     if (filtro.isEmpty) {
@@ -48,16 +47,13 @@ class UsuarioListController extends ChangeNotifier {
     try {
       await carregarUsuarios(chave: chaveAPI, valor: filtro);
     } catch (e) {
-      // Em caso de erro (ID não encontrado, 500, 404, timeout…),
-      // consideramos "nenhum resultado"
+
       resultados = [];
       notifyListeners();
     }
   }
 
-  /// Também retorna Future<void> e trata todos os status !=200 como lista vazia
   Future<void> carregarUsuarios({String? chave, String? valor}) async {
-    // Montagem segura do Uri
     final baseUri = Uri.parse('${AppConstants.baseUrl}/api/usuario/listar');
     final queryParams = <String, String>{};
     if (chave != null && valor != null && valor.isNotEmpty) {
@@ -75,11 +71,9 @@ class UsuarioListController extends ChangeNotifier {
         final List<dynamic> data = json.decode(response.body);
         resultados = data.map((json) => Usuario.fromJson(json)).toList();
       } else {
-        // qualquer outro status vira lista vazia
         resultados = [];
       }
     } catch (_) {
-      // falha de rede, parse, etc → lista vazia
       resultados = [];
     }
 

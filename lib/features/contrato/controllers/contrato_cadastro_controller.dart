@@ -7,10 +7,8 @@ import 'package:front_application/shared/services/orcamento_service.dart';
 class ContratoCadastroController extends ChangeNotifier {
   final ContratoService _contratoService = ContratoService();
 
-  /// Lista de orçamentos para popular o dropdown
   List<Orcamento> orcamentos = [];
 
-  /// Formulário
   Orcamento? orcamentoSelecionado;
   DateTime? dataInicio;
   DateTime? dataFim;
@@ -18,7 +16,6 @@ class ContratoCadastroController extends ChangeNotifier {
 
   bool isLoading = false;
 
-  /// Buscar orçamentos na inicialização
   Future<void> carregarOrcamentos() async {
     try {
       isLoading = true;
@@ -30,7 +27,6 @@ class ContratoCadastroController extends ChangeNotifier {
     }
   }
 
-  /// Carregar contrato existente (edição)
   Future<void> carregarContratoPorOrcamento(int orcamentoId) async {
     try {
       isLoading = true;
@@ -47,7 +43,6 @@ class ContratoCadastroController extends ChangeNotifier {
         (orc) => orc.id == contrato.orcamentoId,
       );
     } catch (_) {
-      // Não existe contrato ainda para o orçamento
       contratoIdExistente = null;
       dataInicio = null;
       dataFim = null;
@@ -57,7 +52,6 @@ class ContratoCadastroController extends ChangeNotifier {
     }
   }
 
-  /// Salvar (criar ou atualizar)
   Future<void> salvarContrato(BuildContext context) async {
     if (orcamentoSelecionado == null) {
       _mostrarSnack(context, 'Selecione o orçamento');

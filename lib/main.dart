@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <- importa o provider
-import 'features/acompanhamento/provider.dart'; // <- importa teu AcompanhamentoProvider
+import 'package:provider/provider.dart';
 
+import 'features/acompanhamento/provider.dart';
 import 'routes/route_generator.dart';
 
 void main() {
@@ -16,7 +16,6 @@ class AuraApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AcompanhamentoProvider()),
-        // Aqui tu pode ir adicionando outros Providers no futuro
       ],
       child: MaterialApp(
         title: 'Aura Projetos e Construções',

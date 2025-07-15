@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../shared/components/form_widgets.dart';
-import '../../../theme/theme.dart'; // ← importa seu tema
+import '../../../theme/theme.dart';
 import '../controllers/usuario_list_controller.dart';
 import '../screens/tela_cadastro_usuario.dart';
 
@@ -22,7 +22,7 @@ class TelaListarUsuarios extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Filtros
+                  
                   Row(
                     children: [
                       Expanded(
@@ -90,7 +90,6 @@ class TelaListarUsuarios extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Estado vazio ou tabela
                   Expanded(
                     child:
                         controller.resultados.isEmpty

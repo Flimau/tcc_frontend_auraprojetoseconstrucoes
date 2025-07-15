@@ -1,34 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:front_application/theme/theme.dart';
 
-/// Widget genérico para buscas com:
-///  - Dropdown de chaves (strings) passadas em `keys`.
-///  - Campo de texto (sempre exibido, a não ser que a chave seja de intervalo de datas).
-///  - Dois campos de data (início e fim) exibidos apenas se `chaveSelecionada` fizer parte de `keysComIntervalo`.
-///  - Botão “Buscar” que dispara `onBuscar`.
-///
-/// Exemplo de uso:
-/// ```dart
-/// InputCampoBusca(
-///   keys: ['ID', 'Cliente', 'Status', 'Data'],
-///   keysComIntervalo: {'Data'},
-///   chaveSelecionada: meuController.chaveSelecionada,
-///   onChaveChanged: (novaChave) => meuController.atualizarChave(novaChave),
-///   valorController: meuController.valorBuscaController,
-///   dataInicioController: meuController.dataInicioController,
-///   dataFimController: meuController.dataFimController,
-///   onBuscar: () => meuController.buscar(context),
-/// ),
-/// ```
-///
-/// Parâmetros:
-///  - `keys`: lista de strings para popular o dropdown.
-///  - `keysComIntervalo`: conjunto de chaves que indicam “busca por intervalo de datas”.
-///  - `chaveSelecionada`: chave atualmente selecionada no dropdown.
-///  - `onChaveChanged`: callback (String) executado quando o usuário escolher outra chave.
-///  - `valorController`: TextEditingController para o campo de texto livre.
-///  - `dataInicioController` e `dataFimController`: TextEditingController para data de início e fim.
-///  - `onBuscar`: callback (void) acionado ao clicar em “Buscar”.
 class InputCampoBusca extends StatelessWidget {
   final List<String> keys;
   final Set<String> keysComIntervalo;
@@ -60,7 +32,7 @@ class InputCampoBusca extends StatelessWidget {
       children: [
         Row(
           children: [
-            // 1) Dropdown de chaves
+      
             Expanded(
               flex: 2,
               child: DropdownButtonFormField<String>(
@@ -94,7 +66,6 @@ class InputCampoBusca extends StatelessWidget {
             ),
             const SizedBox(width: 12),
 
-            // 2) Se a chave atual for “busca por intervalo de datas”, mostramos dois campos de data:
             if (isIntervalo) ...[
               Expanded(
                 flex: 3,
@@ -144,7 +115,7 @@ class InputCampoBusca extends StatelessWidget {
                 ),
               ),
             ] else ...[
-              // 3) Caso contrário, exibimos um único campo de texto
+              
               Expanded(
                 flex: 5,
                 child: TextField(
@@ -171,7 +142,6 @@ class InputCampoBusca extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // 4) Botão Buscar
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
